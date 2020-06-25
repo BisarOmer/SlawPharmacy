@@ -1,0 +1,28 @@
+.flex {
+  display: flex;
+  
+  justify-content: space-between;
+  margin-top: 1%;
+  align-items: center;
+}
+.flex-start-end{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flex-ver{
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  margin-left: 3%;
+}
+
+.formControl {
+  margin: spacing(1);
+  width: 200;
+}
+
+.totalPrice{
+    margin: 0;
+}
