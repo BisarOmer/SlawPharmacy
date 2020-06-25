@@ -108,7 +108,7 @@ export default function Companies() {
                                         data[data.indexOf(oldData)] = newData;
                                         return data
                                     });
-                                    dbQ.queryWithArgNoreturn("UPDATE `companies` SET ``name`=?,`address`=?,`phoneNum`=? WHERE companyID =? ",
+                                    dbQ.queryWithArgNoreturn("UPDATE `companies` SET `name`=?,`address`=?,`phoneNum`=? WHERE companyID =? ",
                                     [newData.name,newData.address,newData.phoneNum,oldData.companyID])
                                 }
                             }, 600);

@@ -68,11 +68,7 @@ export default function Report(props) {
     setValue(newValue);
   };
 
-  React.useEffect(()=>{
-    // setPharmacies(JSON.parse(localStorage.getItem("Pharmacies")))
-    console.log(props.pharmacyID);
-    
-  })
+
 
   return (
     <div className={classes.root}>

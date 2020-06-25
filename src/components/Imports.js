@@ -47,7 +47,7 @@ export default function Imports() {
 
     const [importData, setImportData] = React.useState([])
     const [ParmacyID, setPharmacyId] = React.useState([])
-    const [Username, setUsername] = React.useState([])
+    const [userID, setUserID] = React.useState([])
 
     const [headerData, setHeader] = React.useState()
     const [open, setOpen] = React.useState(false);
@@ -57,8 +57,8 @@ export default function Imports() {
 
     React.useEffect(() => {
         var result = dbQ.query(
-            "SELECT i.`importID`, i.`pharmacyID`, i.`addBy`, i.`importNum`,  i.`cost`, i.`date`, i.`paid`,IF(i.paid=0,'Owe','Paid') as 'status',c.name " +
-            " FROM `imports` as i   INNER JOIN companies as c  ON i.from = c.companyID " +
+            "SELECT i.`importID`, i.`pharmacyID`, i.`addBy`, i.`importNum`,  i.`cost`, i.`date`, i.`paid`,IF(i.paid=0,'Owe','Paid') as 'status',c.name,u.username " +
+            " FROM `imports` as i   INNER JOIN companies as c  ON i.from = c.companyID join users as u on i.addBy = u.userID" +
             " ORDER BY i.`importID` DESC"
         )
         setData(result)
@@ -67,7 +67,7 @@ export default function Imports() {
         setCompanies(returnedCompanies)
 
         setPharmacyId(localStorage.getItem("pharmacyID"))
-        setUsername(localStorage.getItem("username"))
+        setUserID(localStorage.getItem("userID"))
     }, []);
 
     const columns = [
@@ -76,7 +76,7 @@ export default function Imports() {
         { title: 'Cost ', field: 'cost', type: "numeric" },
         { title: 'Date ', field: 'date', type: 'date' },
         { title: 'Status', field: 'status', editComponent: props => (ListStatus(props)) },
-        { title: 'Add By', field: 'addBy', editable: 'never' },
+        { title: 'Add By', field: 'username', editable: 'never' },
 
     ]
 
@@ -208,8 +208,9 @@ export default function Imports() {
                     onRowAdd: (newData) =>
                         new Promise((resolve) => {
                             setTimeout(() => {
-
-                                if (Object.keys.length == 7) {
+                                console.log(Object.keys(newData).length);
+                                
+                                if (Object.keys(newData).length == 5) {
                                     resolve();
                                     setData((prevState) => {
                                         const data = [...prevState];
@@ -218,7 +219,7 @@ export default function Imports() {
                                     });
 
                                     dbQ.queryWithArgNoreturn("INSERT INTO `imports`(`pharmacyID`, `addBy`, `importNum`, `from`, `cost`, `date`, `paid`) VALUES (?,?,?,?,?,?,?)",
-                                        [ParmacyID, Username, newData.importNum, newData.name, newData.cost, newData.date, newData.status]
+                                        [ParmacyID, userID, newData.importNum, newData.name, newData.cost, newData.date, newData.status]
                                     )
                                 }
                                 else {
@@ -239,8 +240,8 @@ export default function Imports() {
                                         return data
                                     });
                                     var newStatus = changeStatus(newData.status)
-                                    dbQ.queryWithArgNoreturn("UPDATE `imports` SET `importNum`=?,`from`=?,`cost`=?,`date`=?,`paid`=? WHERE importID =?",
-                                        [parseInt(newData.importNum), newData.name, newData.cost, newData.date, newStatus, oldData.importID]
+                                    dbQ.queryWithArgNoreturn("UPDATE `imports` SET `importNum`=?,`addBy`=?,`from`=?,`cost`=?,`date`=?,`paid`=? WHERE importID =?",
+                                        [parseInt(newData.importNum),userID,newData.name, newData.cost, newData.date, newStatus, oldData.importID]
                                     )
                                 }
                             }, 600);

@@ -175,6 +175,10 @@ export default class Dashboard extends Component {
         this.setState({ data: result })
 
         this.setState({ profit: costAndProfit[0].profit, cost: costAndProfit[0].cost, total: costAndProfit[0].total })
+        
+        
+        
+        
 
     }
 

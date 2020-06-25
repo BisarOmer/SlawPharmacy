@@ -34,11 +34,14 @@ export default function Stock() {
 
     const [stockData, setStock] = React.useState();
     const [open, setOpen] = React.useState(false);
+    const [pharmacyID, setPharmacyID] = React.useState();
+
 
 
     React.useEffect(() => {
         var result = dbQ.query("SELECT p.productID, p.drugID, p.importNum, p.barcode, p.cost, p.price, p.expire, p.type, p.remainPacket, p.remainSheet, p.remainPill,d.name,d.drugID FROM products as p INNER JOIN drugs as d ON p.drugID=d.drugID")
         setStock(result)
+        setPharmacyID(localStorage.getItem('pharmacyID'))
     }, []);
 
 
@@ -114,9 +117,9 @@ export default function Stock() {
                                     var totalPill = totalSheet*pill;
 
                                     dbQ.queryWithArgNoreturn(
-                                        "INSERT INTO `products`(`drugID`, `importNum`, `barcode`, `cost`, `price`, `expire`, `type`, `packet`, `sheet`, `pill`, `remainPacket`, `remainSheet`, `remainPill`,`sheetPerPacket`,`pillPerSheet`) "+
+                                        "INSERT INTO `products`(`drugID`, `pharmacyID`,`importNum`, `barcode`, `cost`, `price`, `expire`, `type`, `packet`, `sheet`, `pill`, `remainPacket`, `remainSheet`, `remainPill`,`sheetPerPacket`,`pillPerSheet`) "+
                                         " VALUES ((select drugID from drugs where barcode=?),?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                                        [newData.barcode,newData.importNum, newData.barcode, newData.cost, newData.price, newData.expire, newData.type,packet,totalSheet,totalPill,packet,totalSheet,totalPill,sheet,pill ]
+                                        [newData.barcode,pharmacyID,newData.importNum, newData.barcode, newData.cost, newData.price, newData.expire, newData.type,packet,totalSheet,totalPill,packet,totalSheet,totalPill,sheet,pill ]
                                     )
                                 }
                                 else {
@@ -145,7 +148,7 @@ export default function Stock() {
                                         var totalSheet = packet*sheet;
                                         var totalPill = totalSheet*pill;
 
-                                        dbQ.queryWithArgNoreturn("UPDATE `products` SET `drugID`=(select drugID from drugs where barcode=?), `importNum`=?,`barcode`=?,`cost`=?,`price`=?,`expire`=?,`type`=?,`packet`=?, `sheet=?`, `pill`=?, `remainPacket`=?, `remainSheet`=?, `remainPill`=?,sheetPerPacket=?,pillPerSheet=? WHERE productID=?",
+                                        dbQ.queryWithArgNoreturn("UPDATE `products` SET `drugID`=(select drugID from drugs where barcode=?), `importNum`=?,`barcode`=?,`cost`=?,`price`=?,`expire`=?,`type`=?,`packet`=?, `sheet`=?, `pill`=?, `remainPacket`=?, `remainSheet`=?, `remainPill`=?,sheetPerPacket=?,pillPerSheet=? WHERE productID=?",
                                         [newData.barcode,newData.importNum,newData.barcode,newData.cost,newData.price,newData.expire,newData.type,packet,totalSheet,totalPill,packet,totalSheet,totalPill,sheet,pill,oldData.productID]
                                         )
                                     }

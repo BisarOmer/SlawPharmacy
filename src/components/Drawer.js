@@ -166,6 +166,7 @@ export default function DrawerPage() {
     localStorage.removeItem('pharmacyID')
     localStorage.removeItem('username')
     localStorage.removeItem('role')
+    localStorage.removeItem('Pharmacies')
 
     history.push('/login')
 
@@ -298,7 +299,7 @@ export default function DrawerPage() {
           <Link to="/drawer/imports" className={classes.link}>
             <ListItem button key="Import" selected={isActive('#/drawer/imports')}>
               <ListItemIcon> <ArchiveOutlinedIcon /> </ListItemIcon>
-              <ListItemText primary="Import" />
+              <ListItemText primary="Imports" />
             </ListItem>
           </Link>
 

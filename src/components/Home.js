@@ -272,7 +272,7 @@ export default class Home extends Component {
           <Autocomplete
             size="small"
             id="asynchronous"
-            style={{ width: 250 }}
+            style={{ width: 223 }}
             open={this.state.openAutoComplete}
             onOpen={() => {
               this.setState({openAutoComplete:true})
@@ -309,7 +309,7 @@ export default class Home extends Component {
               if (event.key === 'Enter') {
                 sellByEnter();
               }
-            }} InputProps={{ endAdornment: <CropFreeOutlinedIcon />, }} />
+            }} />
 
           <div className='flex'>
 

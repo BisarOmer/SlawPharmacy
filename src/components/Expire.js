@@ -90,7 +90,7 @@ export default class Expire extends Component {
     async returnExpires() {
 
         var result = await dbQ.queryWithArg(
-            "SELECT" +
+            " SELECT" +
             " p.barcode," +
             " p.expire," +
             " p.remainPacket," +
@@ -105,11 +105,11 @@ export default class Expire extends Component {
             " ON" +
             " p.drugID = d.drugID" +
             " WHERE" +
-            " p.expire " + this.compareDate() +"CURRENT_DATE AND p.remainPill != 0 and p.pharmacyID =? " +
+            " p.expire " + this.compareDate() +"CURRENT_DATE AND p.remainPacket != 0 and p.pharmacyID =? " +
             " ORDER BY `p`.`expire` DESC"+ this.limtRow(),
             this.props.pharmacyID
         )
-
+        
         this.setState({ data: result })
     };
 
