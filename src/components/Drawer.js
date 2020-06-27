@@ -19,6 +19,7 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import Button from '@material-ui/core/Button';
 import { createMuiTheme } from '@material-ui/core/styles';
+import Box from '@material-ui/core/Box';
 
 
 //icon
@@ -53,6 +54,7 @@ import Users from './Users'
 import Companies from './Companies'
 import PharmaciesReport from './PharmaciesReport'
 import PharmaciesUser from './PharmaciesUser'
+import PharmaciesInsight from './PharmaciesInsight'
 
 
 
@@ -136,11 +138,15 @@ export default function DrawerPage() {
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
   const [isManager, setisManager] = React.useState(false)
+  const [username, setUsername] = React.useState()
+
 
   React.useEffect(() => {
     var role = localStorage.getItem("role")
     if (role == "Manager")
       setisManager(true)
+
+    setUsername(localStorage.getItem('username'))
   }, []);
 
   const handleDrawerOpen = () => {
@@ -177,12 +183,6 @@ export default function DrawerPage() {
     if (isManager) {
       return (
         <div>
-          <Link to="/drawer/report" className={classes.link}>
-            <ListItem button key="Report" selected={isActive('#/drawer/report')}>
-              <ListItemIcon> <DashboardOutlinedIcon /> </ListItemIcon>
-              <ListItemText primary="Report" />
-            </ListItem>
-          </Link>
           <Link to="/drawer/insights" className={classes.link}>
             <ListItem button key="Insights" selected={isActive('#/drawer/insights')}>
               <ListItemIcon> <BarChartOutlinedIcon /> </ListItemIcon>
@@ -261,7 +261,19 @@ export default function DrawerPage() {
           <Typography variant="h6" noWrap style={{ flexGrow: 1 }}>
             Slaw Pharmacy
           </Typography>
-          <Button color="inherit" onClick={logout}>Logout</Button>
+          <Box display="flex" flexDirection="row">
+
+            <Box p={1.5} >
+              <Typography  variant="overline" gutterBottom>
+                {username}
+              </Typography>
+            </Box>
+            <Box p={1} >
+              <Button color='inherit' onClick={logout}>Logout</Button>
+            </Box>
+
+          </Box>
+
         </Toolbar>
       </AppBar>
 
@@ -288,7 +300,7 @@ export default function DrawerPage() {
 
         <List>
           {CashierLinks()}
-          
+
           <Link to="/drawer/medicine" className={classes.link}>
             <ListItem button key="Medicine" selected={isActive('#/drawer/medicine')}>
               <ListItemIcon> <LocalHospitalOutlinedIcon /> </ListItemIcon>
@@ -310,6 +322,13 @@ export default function DrawerPage() {
             </ListItem>
           </Link>
 
+          <Link to="/drawer/report" className={classes.link}>
+            <ListItem button key="Report" selected={isActive('#/drawer/report')}>
+              <ListItemIcon> <DashboardOutlinedIcon /> </ListItemIcon>
+              <ListItemText primary="Report" />
+            </ListItem>
+          </Link>
+          
           {ManagerLinks()}
         </List>
 
@@ -325,6 +344,8 @@ export default function DrawerPage() {
         <Route path="/drawer/medicine" exact component={Medicine} />
         <Route path="/drawer/users" exact component={PharmaciesUser} />
         <Route path="/drawer/companies" exact component={Companies} />
+        <Route path="/drawer/insights" exact component={PharmaciesInsight} />
+
 
       </main>
 

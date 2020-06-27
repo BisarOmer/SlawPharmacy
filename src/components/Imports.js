@@ -57,7 +57,7 @@ export default function Imports() {
 
     React.useEffect(() => {
         var result = dbQ.query(
-            "SELECT i.`importID`, i.`pharmacyID`, i.`addBy`, i.`importNum`,  i.`cost`, i.`date`, i.`paid`,IF(i.paid=0,'Owe','Paid') as 'status',c.name,u.username " +
+            "SELECT i.`importID`, i.`pharmacyID`, i.`addBy`, i.`importNum`,  i.`cost`, i.`date`, i.`paid`,IF(i.paid=0,'Owe','Paid') as 'status',c.name,c.companyID,u.username " +
             " FROM `imports` as i   INNER JOIN companies as c  ON i.from = c.companyID join users as u on i.addBy = u.userID" +
             " ORDER BY i.`importID` DESC"
         )
@@ -94,7 +94,7 @@ export default function Imports() {
                 fullWidth={true}
                 options={companies}
                 getOptionLabel={(companies) => companies.name}
-                onChange={(event, value) => props.onChange(value.companyID)}
+                onChange={(event, value) => value && props.onChange(value.companyID)}
                 renderInput={(params) => (
                     <TextField
                         {...params}
@@ -116,7 +116,7 @@ export default function Imports() {
                 fullWidth={true}
                 options={status}
                 getOptionLabel={(status) => status.status}
-                onChange={(event, value) => props.onChange(value.value)}
+                onChange={(event, value) => value && props.onChange(value.value)}
                 renderInput={(params) => (
                     <TextField
                         {...params}
@@ -208,8 +208,7 @@ export default function Imports() {
                     onRowAdd: (newData) =>
                         new Promise((resolve) => {
                             setTimeout(() => {
-                                console.log(Object.keys(newData).length);
-                                
+
                                 if (Object.keys(newData).length == 5) {
                                     resolve();
                                     setData((prevState) => {
@@ -234,15 +233,21 @@ export default function Imports() {
                             setTimeout(() => {
                                 resolve();
                                 if (oldData) {
-                                    setData((prevState) => {
-                                        const data = [...prevState];
-                                        data[data.indexOf(oldData)] = newData;
-                                        return data
-                                    });
-                                    var newStatus = changeStatus(newData.status)
-                                    dbQ.queryWithArgNoreturn("UPDATE `imports` SET `importNum`=?,`addBy`=?,`from`=?,`cost`=?,`date`=?,`paid`=? WHERE importID =?",
-                                        [parseInt(newData.importNum),userID,newData.name, newData.cost, newData.date, newStatus, oldData.importID]
-                                    )
+                                    if (Object.keys(newData).length == 5) {
+                                        setData((prevState) => {
+                                            const data = [...prevState];
+                                            data[data.indexOf(oldData)] = newData;
+                                            return data
+                                        });
+                                        var newStatus = changeStatus(newData.status)
+                                        dbQ.queryWithArgNoreturn("UPDATE `imports` SET `importNum`=?,`addBy`=?,`from`=?,`cost`=?,`date`=?,`paid`=? WHERE importID =?",
+                                            [parseInt(newData.importNum), userID, newData.name, newData.cost, newData.date, newStatus, oldData.importID]
+                                        )
+                                    }
+                                    else {
+                                        setOpenvalidation(true)
+                                        resolve();
+                                    }
                                 }
                             }, 600);
                         }),

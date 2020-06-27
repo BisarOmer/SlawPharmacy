@@ -8,16 +8,18 @@ import TextField from '@material-ui/core/TextField';
 import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
 import FormControl from '@material-ui/core/FormControl';
-import InputLabel from '@material-ui/core/InputLabel';
 import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
 import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import MaterialTable from 'material-table';
 import Dialog from '@material-ui/core/Dialog';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import DialogActions from '@material-ui/core/DialogActions';
+import Typography from '@material-ui/core/Typography';
 
 import Autocomplete from '@material-ui/lab/Autocomplete';
-import CircularProgress from '@material-ui/core/CircularProgress';
+
 
 
 
@@ -32,7 +34,6 @@ import Paper from '@material-ui/core/Paper';
 
 //icons
 import SearchIcon from '@material-ui/icons/Search';
-import CropFreeOutlinedIcon from '@material-ui/icons/CropFreeOutlined';
 
 import Check from '@material-ui/icons/Check';
 import FirstPage from '@material-ui/icons/FirstPage';
@@ -46,6 +47,7 @@ import Clear from '@material-ui/icons/Clear';
 //db 
 import db from '../../Backend/db'
 var dbQ = new db();
+
 
 export default class Home extends Component {
 
@@ -66,23 +68,39 @@ export default class Home extends Component {
 
       open: false,
       bulkProducts: [],
-      openAutoComplete:false,
+      openAutoComplete: false,
 
-      SearchByName:[],
-      loading:true,
+      SearchByName: [],
+      loading: true,
+
+      drugDetail: [],
+      quantityValidationOpen: false,
 
     };
   }
 
   componentDidMount() {
     this.setState({ userID: localStorage.getItem("userID"), pharmacyID: localStorage.getItem("pharmacyID") })
+    this.showExpireNotification()
+  }
+
+   async showExpireNotification (){
+    var expires = await dbQ.query("select COUNT(productID) as totalExpired FROM products WHERE expire < CURRENT_DATE")
+    if(expires){
+      let myNotification = new Notification('Expire', {
+        body: expires[0].totalExpired +' Products Expired'
+      })
+
+      myNotification.onclick=()=>{
+        this.props.history.push("/drawer/report")
+      }
+    }
   }
 
   render() {
 
     const handleChange = (event) => {
       if (event.target.name == "selectKind") {
-        const name = event.target.name;
         this.setState({ selectedMenu: event.target.value })
       }
       else if (event.target.name == "quantity") {
@@ -101,16 +119,24 @@ export default class Home extends Component {
 
     const sellByEnter = async () => {
 
-      var result = await dbQ.queryWithArg("select p.productID,p.type,p.barcode,p.expire,p.price,p.pillPerSheet,p.sheetPerPacket,d.name,d.drugID from products as p INNER JOIN drugs as d ON p.barcode=d.barcode where p.barcode = ?", this.state.barcode)
+      var result = await dbQ.queryWithArg("select p.productID,p.type,p.barcode,p.expire,p.price,p.pillPerSheet,p.sheetPerPacket,d.name,d.drugID from products as p INNER JOIN drugs as d ON p.barcode=d.barcode where p.barcode = ? and p.pharmacyID=? and p.remainPacket >= ?",
+        [this.state.barcode, this.state.pharmacyID, this.state.quantity])
+
+      if (result.length) {
+        var drugDetailResult = await dbQ.queryWithArg("SELECT `name`, `scintificName`, `indication`, `sideEffect`, `content` FROM `drugs` WHERE barcode =?", this.state.barcode)
+
+        this.state.drugDetail.push(drugDetailResult[0])
+      }
 
       if (result.length > 1) {
-        var changeExpireToStr = result.map((item) => ({
+        var moreThanPneReturned = result.map((item) => ({
           ...item, expire: ParseToDate(item.expire),
           quantity: this.state.quantity, total: (item.price * this.state.quantity), kind: this.state.selectedMenu
         }))
-        this.setState({ bulkProducts: changeExpireToStr, open: true })
+        this.setState({ bulkProducts: moreThanPneReturned, open: true })
       }
-      else {
+
+      else if (result.length == 1) {
         Object.assign(result[0], { quantity: this.state.quantity })
         Object.assign(result[0], { total: result[0].price * this.state.quantity })
         Object.assign(result[0], { kind: this.state.selectedMenu })
@@ -119,12 +145,16 @@ export default class Home extends Component {
         this.state.data.push(result[0])
         this.setState({ barcode: "", quantity: 1, isReturn: false })
       }
+
+      else {
+        this.setState({ quantityValidationOpen: true })
+      }
     }
 
-    const NameSearch = async (name)=>{
-      var options = await dbQ.queryWithArg("SELECT barcode,name FROM drugs where name LIKE ? ",name+"%")
-      if(options)
-        this.setState({SearchByName:options})
+    const NameSearch = async (name) => {
+      var options = await dbQ.queryWithArg("SELECT barcode,name FROM drugs where name LIKE ? ", name + "%")
+      if (options)
+        this.setState({ SearchByName: options })
     }
 
     const increment = () => {
@@ -136,7 +166,8 @@ export default class Home extends Component {
     }
 
     const deleteFunc = () => {
-      this.setState({ data: [], totalPrice: 0, quantity: 1 })
+      this.setState({ data: [], totalPrice: 0, quantity: 1, drugDetail: [] })
+
     }
 
     const returnOperation = (isReturn) => {
@@ -160,7 +191,7 @@ export default class Home extends Component {
         dbQ.queryWithArgNoreturn("INSERT INTO `bills`( `pharmacyID`, `cashier`, `totalPrice`, `date`) VALUES (?,?,?,?)",
           [this.state.pharmacyID, this.state.userID, this.state.totalPrice, date]);
 
-        let billIDPromise = dbQ.queryWithArg("select max(bill_ID) as billID from bills where cashier = ?", this.state.userID)
+        let billIDPromise = dbQ.queryWithArg("select max(bill_ID) as billID from bills where cashier = ? and pharmacyID=?", [this.state.userID, this.state.pharmacyID])
 
 
         await billIDPromise.then(async function (result) {
@@ -173,12 +204,13 @@ export default class Home extends Component {
         if (this.state.data[i].kind == "Pill") {
 
           // update products table
-          dbQ.queryWithArgNoreturn("update  products set remainPill = remainPill" + returnOperation(this.state.isReturn) + "? where productID = ?",
-            [this.state.data[i].quantity, this.state.data[i].productID]
+          dbQ.queryWithArgNoreturn("update  products set remainPill = remainPill" + returnOperation(this.state.isReturn) + "? where productID = ? and pharmacyID=?",
+            [this.state.data[i].quantity, this.state.data[i].productID, this.state.pharmacyID]
           )
 
           if (this.state.data[i].quantity < this.state.data[i].pillPerSheet) {
-            dbQ.queryWithArgNoreturn("update  products set remainSheet = remainSheet" + returnOperation(this.state.isReturn) + "1 where productID = ?", this.state.data[i].productID)
+            dbQ.queryWithArgNoreturn("update  products set remainSheet = remainSheet" + returnOperation(this.state.isReturn) + "1 where productID = ? and pharmacyID=?",
+              [this.state.data[i].productID, this.state.pharmacyID])
           }
 
           //insering to sold table
@@ -188,15 +220,16 @@ export default class Home extends Component {
 
         else if (this.state.data[i].kind == "Sheet") {
 
-          dbQ.queryWithArgNoreturn("update  products set remainSheet = remainSheet" + returnOperation(this.state.isReturn) + "? where productID = ?",
-            [this.state.data[i].quantity, this.state.data[i].productID]
+          dbQ.queryWithArgNoreturn("update  products set remainSheet = remainSheet" + returnOperation(this.state.isReturn) + "? where productID = ? and pharmacyID=?",
+            [this.state.data[i].quantity, this.state.data[i].productID, this.state.pharmacyID]
           )
-          dbQ.queryWithArgNoreturn("update  products set remainPill = remainPill" + returnOperation(this.state.isReturn) + " ? where productID = ?",
-            [(this.state.data[i].quantity * this.state.data[i].pillPerSheet), this.state.data[i].productID]
+          dbQ.queryWithArgNoreturn("update  products set remainPill = remainPill" + returnOperation(this.state.isReturn) + " ? where productID = ? and pharmacyID=?",
+            [(this.state.data[i].quantity * this.state.data[i].pillPerSheet), this.state.data[i].productID, this.state.pharmacyID]
           )
 
           if (this.state.data[i].quantity < this.state.data[i].sheetPerPacket) {
-            dbQ.queryWithArgNoreturn("update products set remainPacket = remainPacket" + returnOperation(this.state.isReturn) + " 1 where productID = ?", this.state.data[i].productID)
+            dbQ.queryWithArgNoreturn("update products set remainPacket = remainPacket" + returnOperation(this.state.isReturn) + " 1 where productID = ? and pharmacyID=?",
+              [this.state.data[i].productID, this.state.pharmacyID])
           }
 
           //insering to sold table
@@ -206,16 +239,16 @@ export default class Home extends Component {
 
         else if (this.state.data[i].kind == "Packet") {
 
-          dbQ.queryWithArgNoreturn("update products set remainPacket = remainPacket" + returnOperation(this.state.isReturn) + "? where productID = ?",
-            [this.state.data[i].quantity, this.state.data[i].productID]
+          dbQ.queryWithArgNoreturn("update products set remainPacket = remainPacket" + returnOperation(this.state.isReturn) + "? where productID = ? and pharmacyID =? ",
+            [this.state.data[i].quantity, this.state.data[i].productID, this.state.pharmacyID]
           )
 
-          dbQ.queryWithArgNoreturn("update products set remainSheet = remainSheet" + returnOperation(this.state.isReturn) + " ? where productID = ?",
-            [(this.state.data[i].quantity * this.state.data[i].sheetPerPacket), this.state.data[i].productID]
+          dbQ.queryWithArgNoreturn("update products set remainSheet = remainSheet" + returnOperation(this.state.isReturn) + " ? where productID = ? and pharmacyID =? ",
+            [(this.state.data[i].quantity * this.state.data[i].sheetPerPacket), this.state.data[i].productID, this.state.pharmacyID]
           )
 
-          dbQ.queryWithArgNoreturn("update products set remainPill = remainPill" + returnOperation(this.state.isReturn) + " ? where productID = ?",
-            [(this.state.data[i].quantity * this.state.data[i].sheetPerPacket) * this.state.data[i].pillPerSheet, this.state.data[i].productID]
+          dbQ.queryWithArgNoreturn("update products set remainPill = remainPill" + returnOperation(this.state.isReturn) + " ? where productID = ? and pharmacyID =? ",
+            [(this.state.data[i].quantity * this.state.data[i].sheetPerPacket) * this.state.data[i].pillPerSheet, this.state.data[i].productID, this.state.pharmacyID]
           )
 
           //insering to sold table
@@ -230,7 +263,7 @@ export default class Home extends Component {
     }
 
     const handleClose = () => {
-      this.setState({ open: false })
+      this.setState({ open: false, quantityValidationOpen: false })
     }
 
     const columnsDetail = [
@@ -264,6 +297,8 @@ export default class Home extends Component {
     }
 
     const rows = this.state.data
+    const details = this.state.drugDetail
+
 
     return (
       <div >
@@ -275,18 +310,18 @@ export default class Home extends Component {
             style={{ width: 223 }}
             open={this.state.openAutoComplete}
             onOpen={() => {
-              this.setState({openAutoComplete:true})
+              this.setState({ openAutoComplete: true })
             }}
             onClose={() => {
-              this.setState({openAutoComplete:false})
+              this.setState({ openAutoComplete: false })
             }}
-            onInputChange={(obj,value)=>{
+            onInputChange={(obj, value) => {
               NameSearch(value)
             }}
-            onChange={(event, value) =>value&&this.setState({barcode:value.barcode})}
+            onChange={(event, value) => value && this.setState({ barcode: value.barcode })}
             getOptionSelected={(option, value) => option.name === value.name}
             getOptionLabel={(option) => option.name}
-            options={this.state.SearchByName}  
+            options={this.state.SearchByName}
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -377,6 +412,37 @@ export default class Home extends Component {
           </TableContainer>
         </div>
 
+        <Typography style={{ marginTop: "2%" }} variant="h6" gutterBottom>
+          Drug's Information
+        </Typography>
+
+        {/* drugs detail */}
+        <div style={{ marginTop: "1%" }}>
+          <TableContainer component={Paper}>
+            <Table aria-label="simple table">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Scintific Name</TableCell>
+                  <TableCell align="left">Indication</TableCell>
+                  <TableCell align="left">Side Effect</TableCell>
+                  <TableCell align="left">Content</TableCell>
+
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {details.map((row) => (
+                  <TableRow key={row.scintificName}>
+                    <TableCell align="left" >{row.scintificName} </TableCell>
+                    <TableCell align="left">{row.indication} </TableCell>
+                    <TableCell align="left">{row.sideEffect}</TableCell>
+                    <TableCell align="left">{row.content}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </div>
+
         <div className="flex-start-end" style={{ marginTop: "1%" }}>
           <div className="flex" style={{ width: "24%", marginTop: 0 }}>
             <Button variant="contained" color="primary" size="small" onClick={lock}> Lock </Button>
@@ -417,6 +483,22 @@ export default class Home extends Component {
               }
             ]}
           />
+        </Dialog>
+
+        {/* dialog validation that mst sell quantity equal or less than available */}
+        <Dialog
+          open={this.state.quantityValidationOpen}
+          onClose={handleClose}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+
+          <DialogTitle id="alert-dialog-title">{"Less Quantity Available"}</DialogTitle>
+          <DialogActions>
+            <Button onClick={handleClose} color="primary" autoFocus>
+              Agree
+            </Button>
+          </DialogActions>
         </Dialog>
 
       </div>

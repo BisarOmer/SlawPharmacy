@@ -8,7 +8,7 @@ import Typography from '@material-ui/core/Typography';
 import Box from '@material-ui/core/Box';
 
 
-import Report from './Report'
+import Insight from './Insight'
 
 function TabPanel(props) {
     const { children, value, index, ...other } = props;
@@ -50,7 +50,7 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
-export default function PharmaciesReport() {
+export default function PharmaciesInsights() {
 
     const classes = useStyles();
     const [value, setValue] = React.useState(0);
@@ -64,25 +64,18 @@ export default function PharmaciesReport() {
         setPharmacies(JSON.parse(localStorage.getItem("Pharmacies")))
     }, [])
 
-    const returnTabs = () => {
-        if (Pharmacies.length > 1) {
-            return (
+    return (
+        <div className={classes.root}>
+          
                 <Tabs value={value} onChange={handleChange} aria-label="simple tabs example" scrollButtons="auto">
                     {Pharmacies.map(pharmacy => { return (<Tab key={pharmacy.name} label={pharmacy.name} {...a11yProps(pharmacy.pharmacyID)} />) })}
                 </Tabs>
-            )
-        }
-    }
-
-    return (
-        <div className={classes.root}>
-
-            {returnTabs()}
+            
 
             {
-                Pharmacies.map((item, index) => {
-                    return (<TabPanel key={item.name} value={value} index={index}> <Report pharmacyID={item.pharmacyID} /> </TabPanel>)
-                })
+                 Pharmacies.map((item,index) => { 
+                  return (<TabPanel key={item.name} value={value} index={index}> <Insight pharmacyID={item.pharmacyID} /> </TabPanel>) 
+                }) 
             }
 
 

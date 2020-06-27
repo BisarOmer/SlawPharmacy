@@ -88,7 +88,7 @@ export default class Users extends React.Component {
                     fullWidth={true}
                     options={Roles}
                     getOptionLabel={(Roles) => Roles.value}
-                    onChange={(event, value) => props.onChange(value.value)}
+                    onChange={(event, value) => value&&props.onChange(value.value)}
                     renderInput={(params) => (
                         <TextField
                             {...params}

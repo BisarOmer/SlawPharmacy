@@ -98,6 +98,9 @@ export default function Login() {
             history.push("/drawer/medicine")
           }
           else{
+            var pharmacies = [{pharmacyID:result[0].employee}]
+            var pharmaciesString = JSON.stringify(pharmacies)
+            localStorage.setItem("Pharmacies",pharmaciesString)
             localStorage.setItem("pharmacyID", result[0].employee)
             history.push("/drawer/")
           }

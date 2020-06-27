@@ -145,7 +145,9 @@ export default class Dashboard extends Component {
                 " d.name," +
                 " d.barcode," +
                 " d.drugID," +
-                " p.type" +
+                " p.type," +
+                " b.bill_ID," +
+                " b.pharmacyID" +
                 " FROM" +
                 " sold AS s" +
                 " INNER JOIN users AS u" +
@@ -163,9 +165,10 @@ export default class Dashboard extends Component {
                 " JOIN products AS p" +
                 " ON" +
                 " p.productID = s.productID" +
+                " JOIN bills as b ON b.bill_ID = s.bill_ID WHERE b.pharmacyID = ?" +
                 " HAVING " +
                 this.monthWhereQuery() + "= ?"
-                , dateSplitbyHyphen
+                , [this.props.pharmacyID,dateSplitbyHyphen]
             )
 
         var costAndProfit = await dbQ.queryWithArg(

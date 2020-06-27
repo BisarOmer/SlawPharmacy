@@ -196,7 +196,7 @@ export default function Stock() {
                 aria-describedby="alert-dialog-description"
             >
 
-                <DialogTitle id="alert-dialog-title">{"Please FFill All Inputs"}</DialogTitle>
+                <DialogTitle id="alert-dialog-title">{"Please Fill All Inputs"}</DialogTitle>
                 <DialogActions>
                     <Button onClick={handleClose} color="primary" autoFocus>
                         Agree
