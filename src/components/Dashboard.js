@@ -84,6 +84,10 @@ export default class Dashboard extends Component {
             monthly: false,
         };
     }
+    
+    componentDidMount() {
+        this.returnDataByDay(this.state.selectedDate)
+    }
 
     ParseToDate(date) {
         if (date) {
@@ -104,10 +108,6 @@ export default class Dashboard extends Component {
         } else {
             return date;
         }
-    }
-
-    componentDidMount() {
-        this.returnDataByDay(this.state.selectedDate)
     }
 
     monthQuery() {

@@ -81,7 +81,7 @@ export default function PharmaciesReport() {
 
             {
                 Pharmacies.map((item, index) => {
-                    return (<TabPanel key={item.name} value={value} index={index}> <Report pharmacyID={item.pharmacyID} /> </TabPanel>)
+                    return (<TabPanel key={item.pharmacyID} value={value} index={index}> <Report pharmacyID={item.pharmacyID} /> </TabPanel>)
                 })
             }
 

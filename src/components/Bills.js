@@ -4,10 +4,6 @@ import { forwardRef } from 'react';
 //metrial ui
 import MaterialTable from 'material-table';
 import Dialog from '@material-ui/core/Dialog';
-import { withStyles } from '@material-ui/core/styles';
-import MuiDialogTitle from '@material-ui/core/DialogTitle';
-import Typography from '@material-ui/core/Typography';
-import IconButton from '@material-ui/core/IconButton';
 import Button from '@material-ui/core/Button';
 
 //icon
@@ -27,11 +23,16 @@ import Remove from '@material-ui/icons/Remove';
 import SaveAlt from '@material-ui/icons/SaveAlt';
 import Search from '@material-ui/icons/Search';
 import ViewColumn from '@material-ui/icons/ViewColumn';
-import CloseIcon from '@material-ui/icons/Close';
+
 
 //db 
 import db from '../../Backend/db'
 var dbQ = new db();
+
+// prin
+import pdfMake from "pdfmake/build/pdfmake";
+import pdfFonts from "pdfmake/build/vfs_fonts";
+pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
 export default class Bills extends React.Component {
 
@@ -41,8 +42,11 @@ export default class Bills extends React.Component {
       data: [],
       dataDetail: [],
 
+      cashierAndTotal: {},
+
       open: false
     };
+    this.PrintBill = this.PrintBill.bind(this);
   }
 
   componentDidMount() {
@@ -52,6 +56,96 @@ export default class Bills extends React.Component {
       this.setState({ data: result })
     }
     returnData()
+  }
+
+  soldItemsIntoArray() {
+
+    var tempArr
+    var soldItems = []
+    var soldArr = []
+    for (var i = 0; i < this.state.dataDetail.length; i++) {
+
+      tempArr = Object.values(this.state.dataDetail[i])
+
+      soldItems = []
+
+      soldItems.push(tempArr[10])
+      soldItems.push(tempArr[11])
+      soldItems.push(tempArr[5])
+      soldItems.push(tempArr[6])
+      soldItems.push(tempArr[8])
+
+      soldArr.push(soldItems)
+
+    }
+
+    return soldArr
+  }
+
+  PrintBill() {
+
+    var dd = {
+      pageSize: {
+        width: 302.36,
+        height: 'auto'
+      },
+
+      content: [
+        { text: 'Slaw Pharmacy', style: 'header' },
+        { text: 'Bill: ' + this.state.cashierAndTotal.billID },
+        { text: 'Date: ' + this.state.cashierAndTotal.date.toLocaleString() },
+        { text: 'Cashier: ' + this.state.cashierAndTotal.cashhier },
+        { text: 'Items', style: 'subheader' },
+        { text: 'Total = ' +this.state.cashierAndTotal.totalPrice, style: 'subheader' },
+        { text: 'Developed By Slaw Company', alignment: 'center' },
+      ]
+      ,
+      styles: {
+        header: {
+          fontSize: 18,
+          bold: true,
+          margin: [0, 0, 0, 10],
+          alignment: 'center'
+        },
+        subheader: {
+          fontSize: 16,
+          bold: true,
+          margin: [0, 10, 0, 5]
+        },
+        tableExample: {
+          margin: [0, 5, 0, 15]
+        },
+        tableHeader: {
+          bold: true,
+          fontSize: 13,
+          color: 'black'
+        }
+      },
+      defaultStyle: {
+        // alignment: 'justify'
+      }
+
+    }
+
+    var tableObject =
+    {
+      style: 'tableExample',
+      table: {
+        body: [
+          ['Name', 'Type', 'Quantity', 'Price', 'Total'],
+        ]
+      }
+    }
+
+    var items = this.soldItemsIntoArray()
+
+    for (var i = 0; i < items.length; i++) {
+      tableObject.table.body.push(items[i])
+    }
+
+    dd.content.splice(5, 0, tableObject)
+
+    pdfMake.createPdf(dd).open();
   }
 
   render() {
@@ -97,28 +191,9 @@ export default class Bills extends React.Component {
       ViewColumn: forwardRef((props, ref) => <ViewColumn {...props} ref={ref} />)
     };
 
-    const handleClickOpen = () => {
-      this.setState({ open: true })
-    };
-
     const handleClose = () => {
       this.setState({ open: false })
     };
-
-    //style
-    const styles = (theme) => ({
-      root: {
-        margin: 0,
-        padding: theme.spacing(2),
-      },
-      closeButton: {
-        position: 'absolute',
-        right: theme.spacing(1),
-        top: theme.spacing(1),
-        color: theme.palette.grey[500],
-      },
-    });
-
 
     return (
       <div>
@@ -147,11 +222,16 @@ export default class Bills extends React.Component {
                       rowData.bill_ID
                     )
 
-                  this.setState({ dataDetail: result })
+                    
+                  var billDetail = { billID: rowData.bill_ID, date: rowData.date, totalPrice: rowData.totalPrice, cashhier: rowData.username }
+
+                  this.setState({ dataDetail: result,cashierAndTotal:billDetail })
+
                 }
 
                 returnData()
                 this.setState({ open: true })
+
 
               }
             }
@@ -199,7 +279,7 @@ export default class Bills extends React.Component {
           />
 
           <div style={{ padding: "1%", display: 'flex', justifyContent: 'space-between' }}>
-            <Button variant="outlined" size="small">Print</Button>
+            <Button variant="outlined" size="small" onClick={this.PrintBill}>Print</Button>
             {/* <Button variant="outlined" color="secondary" size="small">Delete</Button> */}
           </div>
         </Dialog>

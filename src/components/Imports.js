@@ -4,10 +4,7 @@ import { forwardRef } from 'react';
 //metrial ui
 import MaterialTable from 'material-table';
 import Dialog from '@material-ui/core/Dialog';
-import { withStyles } from '@material-ui/core/styles';
-import MuiDialogTitle from '@material-ui/core/DialogTitle';
 import Typography from '@material-ui/core/Typography';
-import IconButton from '@material-ui/core/IconButton';
 import Button from '@material-ui/core/Button';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogActions from '@material-ui/core/DialogActions';
@@ -163,19 +160,6 @@ export default function Imports() {
         setOpen(false);
         setOpenvalidation(false);
     };
-
-    const styles = (theme) => ({
-        root: {
-            margin: 0,
-            padding: theme.spacing(2),
-        },
-        closeButton: {
-            position: 'absolute',
-            right: theme.spacing(1),
-            top: theme.spacing(1),
-            color: theme.palette.grey[500],
-        },
-    });
 
     const ParseToDate = (date) => {
         if (date) {

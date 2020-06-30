@@ -36,8 +36,6 @@ export default function Stock() {
     const [open, setOpen] = React.useState(false);
     const [pharmacyID, setPharmacyID] = React.useState();
 
-
-
     React.useEffect(() => {
         var result = dbQ.query("SELECT p.productID, p.drugID, p.importNum, p.barcode, p.cost, p.price, p.expire, p.type, p.remainPacket, p.remainSheet, p.remainPill,d.name,d.drugID FROM products as p INNER JOIN drugs as d ON p.drugID=d.drugID")
         setStock(result)

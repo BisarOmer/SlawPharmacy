@@ -1,7 +1,5 @@
 import React from 'react';
 
-// redirect to main and check Auth
-import App from './App'
 
 // metrial ui components
 import Avatar from '@material-ui/core/Avatar';
@@ -16,8 +14,6 @@ import Container from '@material-ui/core/Container';
 
 // react-route-dom
 import {
-  Switch,
-  Route,
   useHistory,
 } from "react-router-dom";
 
@@ -26,10 +22,9 @@ function Copyright() {
   return (
     <Typography variant="body2" color="textSecondary" align="center">
       {'Copyright © '}
-        sLaw Pharmacy
+        Slaw Pharmacy
       {' '}
       {new Date().getFullYear()}
-      {'.'}
     </Typography>
   );
 }
@@ -64,10 +59,8 @@ export default function Login() {
 
   const [username, setUsername] = React.useState();
   const [password, setPassword] = React.useState();
-  const [error, setError] = React.useState(false);
-  const [wrong, setWrong] = React.useState(false);
-
-
+  const [error, setError] = React.useState(false); // used for  empty input validation
+  const [wrong, setWrong] = React.useState(false); // if username or password was wrong show error
 
   let history = useHistory();
   const classes = useStyles();
@@ -83,28 +76,34 @@ export default function Login() {
   }
 
   const LoginBtn = async () => {
+
     if (username && password) {
 
       var result = await dbQ.queryWithArg("select userID,employee,username,role from users where username=? and password=?", [username, password]);
+
       if (result.length) {
+
+        // all these data used in query
         localStorage.setItem("userID", result[0].userID)
         localStorage.setItem("username", result[0].username)
         localStorage.setItem("role", result[0].role)
 
-          if(result[0].role=='Manager'){
-            var pharmacies = await dbQ.queryWithArg("select pharmacyID,name from pharmacies where manager = ?",result[0].userID)
-            var pharmaciesString = JSON.stringify(pharmacies)
-            localStorage.setItem("Pharmacies",pharmaciesString)
-            history.push("/drawer/medicine")
-          }
-          else{
-            var pharmacies = [{pharmacyID:result[0].employee}]
-            var pharmaciesString = JSON.stringify(pharmacies)
-            localStorage.setItem("Pharmacies",pharmaciesString)
-            localStorage.setItem("pharmacyID", result[0].employee)
-            history.push("/drawer/")
-          }
-          
+        // manager user has to have all pharmacies 
+        if (result[0].role == 'Manager') {
+          var pharmacies = await dbQ.queryWithArg("select pharmacyID,name from pharmacies where manager = ?", result[0].userID)
+          var pharmaciesString = JSON.stringify(pharmacies)
+          localStorage.setItem("Pharmacies", pharmaciesString)
+          history.push("/drawer/medicine")
+        }
+        //employee users require only the pharmacyy work at
+        else {
+          var pharmacies = [{ pharmacyID: result[0].employee }]
+          var pharmaciesString = JSON.stringify(pharmacies)
+          localStorage.setItem("Pharmacies", pharmaciesString)
+          localStorage.setItem("pharmacyID", result[0].employee)
+          history.push("/drawer/")
+        }
+
       }
       else {
         setWrong(true)
@@ -119,13 +118,15 @@ export default function Login() {
   };
 
   return (
-    <Container component="main" maxWidth="xs" style={{backgroundColor:"#fff"}}>
+    <Container component="main" maxWidth="xs" style={{ backgroundColor: "#fff" }}>
       <CssBaseline />
 
       <div className={classes.paper}>
+
         <Avatar className={classes.avatar}>
           <LockOutlinedIcon />
         </Avatar>
+
         <Typography component="h1" variant="h5">
           Sign in
         </Typography>
@@ -175,15 +176,11 @@ export default function Login() {
              </Typography>
               : null
           }
-
-
-
         </form>
-
 
       </div>
 
-      <Box mt={8}>
+      <Box p={5}>
         <Copyright />
       </Box>
 

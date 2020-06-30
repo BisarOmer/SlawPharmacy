@@ -60,7 +60,7 @@ export default class Users extends React.Component {
             "SELECT users.userID, users.employee, users.username, users.password, users.role, pharmacies.name, pharmacies.pharmacyID FROM users " +
             " INNER JOIN pharmacies ON users.employee= pharmacies.pharmacyID where  pharmacies.pharmacyID =? ",
             this.state.PharmacyID)
-            
+
         this.setState({ data: result, userID: localStorage.getItem("userID") })
     }
 
@@ -71,12 +71,12 @@ export default class Users extends React.Component {
             { title: 'Pharmacy', field: 'name', editable: "never" },
             { title: 'Username', field: 'username' },
             { title: 'Password', field: 'password' },
-            { title: 'Role', field: 'role',editComponent: props => (ListRole(props)) },
+            { title: 'Role', field: 'role', editComponent: props => (ListRole(props)) },
         ]
 
-        const Roles =[
-            {value:'Cashier'},
-            {value:"Manager"}
+        const Roles = [
+            { value: 'Cashier' },
+            { value: "Manager" }
         ]
 
         function ListRole(props) {
@@ -88,7 +88,7 @@ export default class Users extends React.Component {
                     fullWidth={true}
                     options={Roles}
                     getOptionLabel={(Roles) => Roles.value}
-                    onChange={(event, value) => value&&props.onChange(value.value)}
+                    onChange={(event, value) => value && props.onChange(value.value)}
                     renderInput={(params) => (
                         <TextField
                             {...params}
@@ -150,7 +150,7 @@ export default class Users extends React.Component {
                                         )
                                     }
                                     else {
-                                        this.setState({open:true})
+                                        this.setState({ open: true })
                                         resolve();
                                     }
                                 }, 600);
@@ -168,12 +168,12 @@ export default class Users extends React.Component {
                                             });
 
                                             dbQ.queryWithArgNoreturn("UPDATE `users` SET `username`=?,`password`=?,`role`=? WHERE userID=? and pharmacyID =?",
-                                                [newData.username, newData.password, newData.role, oldData.userID,this.state.PharmacyID]
+                                                [newData.username, newData.password, newData.role, oldData.userID, this.state.PharmacyID]
                                             )
                                         }
                                     }
                                     else {
-                                        this.setState({open:true})
+                                        this.setState({ open: true })
                                         resolve();
                                     }
                                 }, 600);
@@ -189,7 +189,7 @@ export default class Users extends React.Component {
                                             return data
                                         });
                                         dbQ.queryWithArgNoreturn("DELETE FROM `users` WHERE userID=? and pharmacyID = ?",
-                                            [oldData.userID,this.state.PharmacyID]
+                                            [oldData.userID, this.state.PharmacyID]
                                         )
                                     }
                                     else

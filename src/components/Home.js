@@ -17,9 +17,10 @@ import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogActions from '@material-ui/core/DialogActions';
 import Typography from '@material-ui/core/Typography';
-
 import Autocomplete from '@material-ui/lab/Autocomplete';
-
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from '@material-ui/core/Switch';
+import Box from '@material-ui/core/Box';
 
 
 
@@ -48,6 +49,16 @@ import Clear from '@material-ui/icons/Clear';
 import db from '../../Backend/db'
 var dbQ = new db();
 
+// prin
+import pdfMake from "pdfmake/build/pdfmake";
+import pdfFonts from "pdfmake/build/vfs_fonts";
+pdfMake.vfs = pdfFonts.pdfMake.vfs;
+
+// store data 
+const Store = require('electron-store');
+
+const store = new Store();
+
 
 export default class Home extends Component {
 
@@ -55,51 +66,147 @@ export default class Home extends Component {
   constructor(props) {
     super(props);
     this.state = {
+
       data: [],
       selectedMenu: "Packet",
       quantity: 1,
       barcode: "",
       totalPrice: 0,
+      billID: 0,
 
       userID: 0,
       pharmacyID: 0,
 
+      isPrint: store.get("isPrint"),
       isReturn: false,
-
       open: false,
+
       bulkProducts: [],
       openAutoComplete: false,
 
       SearchByName: [],
-      loading: true,
+
 
       drugDetail: [],
       quantityValidationOpen: false,
 
     };
+
+    this.PrintBill = this.PrintBill.bind(this);
   }
 
   componentDidMount() {
     this.setState({ userID: localStorage.getItem("userID"), pharmacyID: localStorage.getItem("pharmacyID") })
-    this.showExpireNotification()
+    // this.showExpireNotification()
+
+
   }
 
-   async showExpireNotification (){
+  async showExpireNotification() {
     var expires = await dbQ.query("select COUNT(productID) as totalExpired FROM products WHERE expire < CURRENT_DATE")
-    if(expires){
+    if (expires) {
       let myNotification = new Notification('Expire', {
-        body: expires[0].totalExpired +' Products Expired'
+        body: expires[0].totalExpired + ' Products Expired'
       })
 
-      myNotification.onclick=()=>{
+      myNotification.onclick = () => {
         this.props.history.push("/drawer/report")
       }
     }
   }
 
+  soldItemsIntoArray() {
+
+    var tempArr
+    var soldItems = []
+    var soldArr = []
+    for (var i = 0; i < this.state.data.length; i++) {
+
+      tempArr = Object.values(this.state.data[i])
+      soldItems = []
+
+      soldItems.push(tempArr[7])
+      soldItems.push(tempArr[1])
+      soldItems.push(tempArr[9])
+      soldItems.push(tempArr[4])
+      soldItems.push(tempArr[10])
+
+      soldArr.push(soldItems)
+
+    }
+
+    return soldArr
+  }
+
+  PrintBill() {
+    var date = new Date()
+    var dd = {
+      pageSize: {
+        width: 302.36,
+        height: 'auto'
+      },
+      content: [
+        { text: 'Slaw Pharmacy', style: 'header' },
+        { text: 'Bill: ' + this.state.billID },
+        { text: 'Date: ' + date.toLocaleString() },
+        { text: 'Cashier: ' + localStorage.getItem('username') },
+        { text: 'Items', style: 'subheader' },
+        { text: 'Total = ' + this.state.totalPrice, style: 'subheader' },
+        { text: 'Developed By Slaw Company', alignment: 'center' },
+      ]
+      ,
+      styles: {
+        header: {
+          fontSize: 18,
+          bold: true,
+          margin: [0, 0, 0, 10],
+          alignment: 'center'
+        },
+        subheader: {
+          fontSize: 16,
+          bold: true,
+          margin: [0, 10, 0, 5]
+        },
+        tableExample: {
+          margin: [0, 5, 0, 15]
+        },
+        tableHeader: {
+          bold: true,
+          fontSize: 13,
+          color: 'black'
+        }
+      },
+      defaultStyle: {
+        // alignment: 'justify'
+      }
+
+    }
+
+    var tableObject =
+    {
+      style: 'tableExample',
+      table: {
+        body: [
+          ['Name', 'Type', 'Quantity', 'Price', 'Total'],
+        ]
+      }
+    }
+
+    var items = this.soldItemsIntoArray()
+
+    for (var i = 0; i < items.length; i++) {
+      tableObject.table.body.push(items[i])
+    }
+
+    dd.content.splice(5, 0, tableObject)
+
+    pdfMake.createPdf(dd).open();
+  }
+
   render() {
 
     const handleChange = (event) => {
+
       if (event.target.name == "selectKind") {
         this.setState({ selectedMenu: event.target.value })
       }
@@ -114,8 +221,17 @@ export default class Home extends Component {
       else if (event.target.name = "selectStatus") {
         this.setState({ isReturn: event.target.value })
       }
-
     };
+
+    const handleChangePrint = () => {
+      if (store.get('isPrint')) {
+        store.set('isPrint', false); this.setState({ isPrint: false })
+      }
+      else {
+        store.set('isPrint', true); this.setState({ isPrint: true })
+      }
+      // this.state.isPrint ? this.setState({isPrint:false}):this.setState({isPrint:true})
+    }
 
     const sellByEnter = async () => {
 
@@ -158,7 +274,7 @@ export default class Home extends Component {
     }
 
     const increment = () => {
-      this.setState((state) => ({ quantity: (state.quantity + 1) }))
+      this.setState((state) => ({ quantity: (parseInt(state.quantity) + 1) }))
     }
 
     const decrement = () => {
@@ -183,83 +299,88 @@ export default class Home extends Component {
     }
 
     const lock = async () => {
+      let currentComponent = this;
 
-      var billID
       let date = new Date();
 
-      if (!this.state.return) {
-        dbQ.queryWithArgNoreturn("INSERT INTO `bills`( `pharmacyID`, `cashier`, `totalPrice`, `date`) VALUES (?,?,?,?)",
-          [this.state.pharmacyID, this.state.userID, this.state.totalPrice, date]);
+      if (this.state.data.length) {
 
-        let billIDPromise = dbQ.queryWithArg("select max(bill_ID) as billID from bills where cashier = ? and pharmacyID=?", [this.state.userID, this.state.pharmacyID])
+        if (!this.state.return) {
+          dbQ.queryWithArgNoreturn("INSERT INTO `bills`( `pharmacyID`, `cashier`, `totalPrice`, `date`) VALUES (?,?,?,?)",
+            [this.state.pharmacyID, this.state.userID, this.state.totalPrice, date]);
+
+          let billIDPromise = dbQ.queryWithArg("select max(bill_ID) as billID from bills where cashier = ? and pharmacyID=?", [this.state.userID, this.state.pharmacyID])
 
 
-        await billIDPromise.then(async function (result) {
-          billID = result[0].billID
-        });
-      }
+          await billIDPromise.then(async function (result) {
 
-      for (var i = 0; i < this.state.data.length; i++) {
 
-        if (this.state.data[i].kind == "Pill") {
+            currentComponent.setState({ billID: result[0].billID })
+          });
+        }
 
-          // update products table
-          dbQ.queryWithArgNoreturn("update  products set remainPill = remainPill" + returnOperation(this.state.isReturn) + "? where productID = ? and pharmacyID=?",
-            [this.state.data[i].quantity, this.state.data[i].productID, this.state.pharmacyID]
-          )
+        for (var i = 0; i < this.state.data.length; i++) {
 
-          if (this.state.data[i].quantity < this.state.data[i].pillPerSheet) {
-            dbQ.queryWithArgNoreturn("update  products set remainSheet = remainSheet" + returnOperation(this.state.isReturn) + "1 where productID = ? and pharmacyID=?",
-              [this.state.data[i].productID, this.state.pharmacyID])
+          if (this.state.data[i].kind == "Pill") {
+
+            // update products table
+            dbQ.queryWithArgNoreturn("update  products set remainPill = remainPill" + returnOperation(this.state.isReturn) + "? where productID = ? and pharmacyID=?",
+              [this.state.data[i].quantity, this.state.data[i].productID, this.state.pharmacyID]
+            )
+
+            if (this.state.data[i].quantity < this.state.data[i].pillPerSheet) {
+              dbQ.queryWithArgNoreturn("update  products set remainSheet = remainSheet" + returnOperation(this.state.isReturn) + "1 where productID = ? and pharmacyID=?",
+                [this.state.data[i].productID, this.state.pharmacyID])
+            }
+
+            //insering to sold table
+            if (!this.state.isReturn)
+              insertToSold(this.state.data[i], this.state.billID, date)
           }
 
-          //insering to sold table
-          if (!this.state.isReturn)
-            insertToSold(this.state.data[i], billID, date)
-        }
+          else if (this.state.data[i].kind == "Sheet") {
 
-        else if (this.state.data[i].kind == "Sheet") {
+            dbQ.queryWithArgNoreturn("update  products set remainSheet = remainSheet" + returnOperation(this.state.isReturn) + "? where productID = ? and pharmacyID=?",
+              [this.state.data[i].quantity, this.state.data[i].productID, this.state.pharmacyID]
+            )
+            dbQ.queryWithArgNoreturn("update  products set remainPill = remainPill" + returnOperation(this.state.isReturn) + " ? where productID = ? and pharmacyID=?",
+              [(this.state.data[i].quantity * this.state.data[i].pillPerSheet), this.state.data[i].productID, this.state.pharmacyID]
+            )
 
-          dbQ.queryWithArgNoreturn("update  products set remainSheet = remainSheet" + returnOperation(this.state.isReturn) + "? where productID = ? and pharmacyID=?",
-            [this.state.data[i].quantity, this.state.data[i].productID, this.state.pharmacyID]
-          )
-          dbQ.queryWithArgNoreturn("update  products set remainPill = remainPill" + returnOperation(this.state.isReturn) + " ? where productID = ? and pharmacyID=?",
-            [(this.state.data[i].quantity * this.state.data[i].pillPerSheet), this.state.data[i].productID, this.state.pharmacyID]
-          )
+            if (this.state.data[i].quantity < this.state.data[i].sheetPerPacket) {
+              dbQ.queryWithArgNoreturn("update products set remainPacket = remainPacket" + returnOperation(this.state.isReturn) + " 1 where productID = ? and pharmacyID=?",
+                [this.state.data[i].productID, this.state.pharmacyID])
+            }
 
-          if (this.state.data[i].quantity < this.state.data[i].sheetPerPacket) {
-            dbQ.queryWithArgNoreturn("update products set remainPacket = remainPacket" + returnOperation(this.state.isReturn) + " 1 where productID = ? and pharmacyID=?",
-              [this.state.data[i].productID, this.state.pharmacyID])
+            //insering to sold table
+            if (!this.state.isReturn)
+              insertToSold(this.state.data[i], this.state.billID, date)
           }
 
-          //insering to sold table
-          if (!this.state.isReturn)
-            insertToSold(this.state.data[i], billID, date)
+          else if (this.state.data[i].kind == "Packet") {
+
+            dbQ.queryWithArgNoreturn("update products set remainPacket = remainPacket" + returnOperation(this.state.isReturn) + "? where productID = ? and pharmacyID =? ",
+              [this.state.data[i].quantity, this.state.data[i].productID, this.state.pharmacyID]
+            )
+
+            dbQ.queryWithArgNoreturn("update products set remainSheet = remainSheet" + returnOperation(this.state.isReturn) + " ? where productID = ? and pharmacyID =? ",
+              [(this.state.data[i].quantity * this.state.data[i].sheetPerPacket), this.state.data[i].productID, this.state.pharmacyID]
+            )
+
+            dbQ.queryWithArgNoreturn("update products set remainPill = remainPill" + returnOperation(this.state.isReturn) + " ? where productID = ? and pharmacyID =? ",
+              [(this.state.data[i].quantity * this.state.data[i].sheetPerPacket) * this.state.data[i].pillPerSheet, this.state.data[i].productID, this.state.pharmacyID]
+            )
+
+            //insering to sold table
+            if (!this.state.isReturn)
+              insertToSold(this.state.data[i], this.state.billID, date)
+          }
+
         }
 
-        else if (this.state.data[i].kind == "Packet") {
-
-          dbQ.queryWithArgNoreturn("update products set remainPacket = remainPacket" + returnOperation(this.state.isReturn) + "? where productID = ? and pharmacyID =? ",
-            [this.state.data[i].quantity, this.state.data[i].productID, this.state.pharmacyID]
-          )
-
-          dbQ.queryWithArgNoreturn("update products set remainSheet = remainSheet" + returnOperation(this.state.isReturn) + " ? where productID = ? and pharmacyID =? ",
-            [(this.state.data[i].quantity * this.state.data[i].sheetPerPacket), this.state.data[i].productID, this.state.pharmacyID]
-          )
-
-          dbQ.queryWithArgNoreturn("update products set remainPill = remainPill" + returnOperation(this.state.isReturn) + " ? where productID = ? and pharmacyID =? ",
-            [(this.state.data[i].quantity * this.state.data[i].sheetPerPacket) * this.state.data[i].pillPerSheet, this.state.data[i].productID, this.state.pharmacyID]
-          )
-
-          //insering to sold table
-          if (!this.state.isReturn)
-            insertToSold(this.state.data[i], billID, date)
-        }
-
+        this.state.isPrint ? this.PrintBill() : null
+        deleteFunc();
       }
-
-      deleteFunc();
-
     }
 
     const handleClose = () => {
@@ -443,12 +564,31 @@ export default class Home extends Component {
           </TableContainer>
         </div>
 
+        {/* btn lock,delete,switch to print */}
         <div className="flex-start-end" style={{ marginTop: "1%" }}>
           <div className="flex" style={{ width: "24%", marginTop: 0 }}>
             <Button variant="contained" color="primary" size="small" onClick={lock}> Lock </Button>
-            <Button variant="outlined" size="small">Print</Button>
+            {/* <Button variant="outlined" size="small" onClick={this.PrintBill}>Print</Button> */}
           </div>
-          <Button variant="outlined" color="secondary" size="small" onClick={deleteFunc} >Delete</Button>
+
+          <div className="flex" style={{width:'22%'}}>
+            <Box fontSize={15} >
+              Print After Sell
+            </Box>
+
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={this.state.isPrint}
+                  onChange={handleChangePrint}
+                  name="isPrint"
+                  color="primary"
+
+                />
+              }
+            />
+            <Button style={{ marginLeft: "2%" }} variant="outlined" color="secondary" size="small" onClick={deleteFunc} >Delete</Button>
+          </div>
         </div>
 
         {/*  bulk returnted product */}

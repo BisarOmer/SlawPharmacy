@@ -140,12 +140,12 @@ export default function DrawerPage() {
   const [isManager, setisManager] = React.useState(false)
   const [username, setUsername] = React.useState()
 
+  let history = useHistory();
 
   React.useEffect(() => {
     var role = localStorage.getItem("role")
     if (role == "Manager")
       setisManager(true)
-
     setUsername(localStorage.getItem('username'))
   }, []);
 
@@ -164,8 +164,6 @@ export default function DrawerPage() {
       return false
 
   };
-
-  let history = useHistory();
 
   const logout = () => {
     localStorage.removeItem('userID')
@@ -264,7 +262,7 @@ export default function DrawerPage() {
           <Box display="flex" flexDirection="row">
 
             <Box p={1.5} >
-              <Typography  variant="overline" gutterBottom>
+              <Typography variant="overline" gutterBottom>
                 {username}
               </Typography>
             </Box>
@@ -328,7 +326,7 @@ export default function DrawerPage() {
               <ListItemText primary="Report" />
             </ListItem>
           </Link>
-          
+
           {ManagerLinks()}
         </List>
 
