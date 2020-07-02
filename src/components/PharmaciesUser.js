@@ -64,13 +64,20 @@ export default function PharmaciesUser() {
         setPharmacies(JSON.parse(localStorage.getItem("Pharmacies")))
     }, [])
 
+    const returnTabs = () => {
+        if (Pharmacies.length > 1) {
+            return (
+                <Tabs value={value} onChange={handleChange} aria-label="simple tabs example" scrollButtons="auto">
+                    {Pharmacies.map(pharmacy => { return (<Tab key={pharmacy.name} label={pharmacy.name} {...a11yProps(pharmacy.pharmacyID)} />) })}
+                </Tabs>
+            )
+        }
+    }
+
     return (
         <div className={classes.root}>
 
-            <Tabs value={value} onChange={handleChange} aria-label="simple tabs example" scrollButtons="auto">
-                {Pharmacies.map(pharmacy => { return (<Tab key={pharmacy.name} label={pharmacy.name} {...a11yProps(pharmacy.pharmacyID)} />) })}
-            </Tabs>
-
+            {returnTabs()}
 
             {
                 Pharmacies.map((item, index) => {

@@ -64,18 +64,25 @@ export default function PharmaciesInsights() {
         setPharmacies(JSON.parse(localStorage.getItem("Pharmacies")))
     }, [])
 
-    return (
-        <div className={classes.root}>
-          
+    const returnTabs = () => {
+        if (Pharmacies.length > 1) {
+            return (
                 <Tabs value={value} onChange={handleChange} aria-label="simple tabs example" scrollButtons="auto">
                     {Pharmacies.map(pharmacy => { return (<Tab key={pharmacy.name} label={pharmacy.name} {...a11yProps(pharmacy.pharmacyID)} />) })}
                 </Tabs>
-            
+            )
+        }
+    }
+
+    return (
+        <div className={classes.root}>
+
+            {returnTabs()}
 
             {
-                 Pharmacies.map((item,index) => { 
-                  return (<TabPanel key={item.name} value={value} index={index}> <Insight pharmacyID={item.pharmacyID} /> </TabPanel>) 
-                }) 
+                Pharmacies.map((item, index) => {
+                    return (<TabPanel key={item.name} value={value} index={index}> <Insight pharmacyID={item.pharmacyID} /> </TabPanel>)
+                })
             }
 
 

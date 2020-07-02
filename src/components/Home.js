@@ -98,8 +98,6 @@ export default class Home extends Component {
   componentDidMount() {
     this.setState({ userID: localStorage.getItem("userID"), pharmacyID: localStorage.getItem("pharmacyID") })
     // this.showExpireNotification()
-
-
   }
 
   async showExpireNotification() {
@@ -424,6 +422,7 @@ export default class Home extends Component {
     return (
       <div >
 
+        {/*  search by name  */}
         <div className="flex-start-end">
           <Autocomplete
             size="small"
@@ -452,7 +451,7 @@ export default class Home extends Component {
             )}
           />
         </div>
-
+        {/* control row  */}
         <div className='flex'>
 
           <TextField id="outlined-basic" label="Barcode" name="barcode"
@@ -502,6 +501,7 @@ export default class Home extends Component {
 
         </div>
 
+        {/* sold drgs table  */}
         <div style={{ marginTop: "1%" }}>
           <TableContainer component={Paper}>
             <Table aria-label="simple table">
@@ -533,11 +533,11 @@ export default class Home extends Component {
           </TableContainer>
         </div>
 
+        {/* drugs detail */}
         <Typography style={{ marginTop: "2%" }} variant="h6" gutterBottom>
           Drug's Information
         </Typography>
 
-        {/* drugs detail */}
         <div style={{ marginTop: "1%" }}>
           <TableContainer component={Paper}>
             <Table aria-label="simple table">
@@ -573,7 +573,7 @@ export default class Home extends Component {
 
           <div className="flex" style={{width:'22%'}}>
             <Box fontSize={15} >
-              Print After Sell
+              Print
             </Box>
 
             <FormControlLabel
@@ -625,7 +625,7 @@ export default class Home extends Component {
           />
         </Dialog>
 
-        {/* dialog validation that mst sell quantity equal or less than available */}
+        {/* dialog validation that must sell quantity equal or less than available */}
         <Dialog
           open={this.state.quantityValidationOpen}
           onClose={handleClose}
