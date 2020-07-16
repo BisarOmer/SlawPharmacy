@@ -34,7 +34,7 @@ export default function Drugs() {
 
     const [data, setData] = React.useState([]);
     const [open, setOpen] = React.useState(false);
-    const [loaded,setload]=React.useState(false);
+    const [loaded, setload] = React.useState(false);
 
     const columns = [
         // { title: 'Drug ID ', field: 'drugID',editable:'never' },
@@ -53,9 +53,23 @@ export default function Drugs() {
 
     }, []);
 
+    const lastOneDrug = () => {
+
+        var result = dbQ.query("SELECT * FROM `drugs` ORDER BY `drugs`.`drugID` DESC LIMIT 1 ")
+        
+
+
+        setData((prevState) => {
+            const data = [...prevState];
+            data.push(result[0]);
+            return data
+        });
+
+    }
+
     const handleClose = () => {
         setOpen(false);
-      };
+    };
 
     const tableIcons = {
         Add: forwardRef((props, ref) => <AddBox {...props} ref={ref} />),
@@ -79,86 +93,91 @@ export default function Drugs() {
 
     return (
         <div>
-        {
-        loaded?<MaterialTable
-            title="Medicine"
-            columns={columns}
-            data={data}
-            editable={{
-                onRowAdd: (newData) =>
-                    new Promise((resolve) => {
-                        setTimeout(() => {
-                            if (Object.keys(newData).length == 6) {
-                                resolve();
-                                setData((prevState) => {
-                                    const data = [...prevState];
-                                    data.push(newData);
-                                    return data
-                                });
-                                dbQ.queryWithArgNoreturn("INSERT INTO `drugs` (`barcode`, `name`, `scintificName`, `indication`, `sideEffect`, `content`)  VALUES (?,?,?,?,?,?)",
-                                    [parseInt(newData.barcode), newData.name, newData.scintificName, newData.indication, newData.sideEffect, newData.content]);
-                            }
-                            else{
-                                setOpen(true)
-                                resolve();
-                            }
+            {
+                loaded ? <MaterialTable
+                    title="Medicine"
+                    columns={columns}
+                    data={data}
+                    editable={{
+                        onRowAdd: (newData) =>
+                            new Promise((resolve) => {
+                                setTimeout(() => {
+                                    if (Object.keys(newData).length == 6) {
+                                        resolve();
+                                        setData((prevState) => {
+                                            const data = [...prevState];
+                                            data.push(newData);
+                                            return data
+                                        });
 
-                        }, 600);
-                    }),
-                onRowUpdate: (newData, oldData) =>
-                    new Promise((resolve) => {
-                        setTimeout(() => {
-                            resolve();
-                            if (oldData) {
-                                setData((prevState) => {
-                                    const data = [...prevState];
-                                    data[data.indexOf(oldData)] = newData;
-                                    return data
-                                });
-                                dbQ.queryWithArgNoreturn("UPDATE `drugs` SET  `barcode`=?,`name`=?,`scintificName`=?,`indication`=?,`sideEffect`=?,`content`=?  WHERE drugID=?",
-                                    [parseInt(newData.barcode), newData.name, newData.scintificName, newData.indication, newData.sideEffect, newData.content, oldData.drugID])
-                            }
-                        }, 600);
-                    }),
-                onRowDelete: (oldData) =>
-                    new Promise((resolve) => {
-                        setTimeout(() => {
-                            resolve();
-                            setData((prevState) => {
-                                const data = [...prevState];
-                                data.splice(data.indexOf(oldData), 1);
-                                return data;
-                            });
-                            dbQ.queryWithArgNoreturn("DELETE FROM `drugs` WHERE drugID =?", oldData.drugID)
-                        }, 600);
-                    }),
-            }}
-            icons={tableIcons}
-            options={{
-                headerStyle: {
-                    backgroundColor: "#084177",
-                    color: '#FFF'
-                },
-                pageSizeOptions:[20,30,60],
-                pageSize:20
-            }}
-        />:<Skeleton animation="wave" />
-        }
+                                        const insert = async () => {
+                                            await dbQ.queryWithArgNoreturn("INSERT INTO `drugs` (`barcode`, `name`, `scintificName`, `indication`, `sideEffect`, `content`)  VALUES (?,?,?,?,?,?)",
+                                                [parseInt(newData.barcode), newData.name, newData.scintificName, newData.indication, newData.sideEffect, newData.content]);
+                                        }
+                                        insert()
+                                        lastOneDrug()
+                                    }
+                                    else {
+                                        setOpen(true)
+                                        resolve();
+                                    }
 
-        <Dialog
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-          
-        <DialogTitle id="alert-dialog-title">{"Please Fill All Inputs"}</DialogTitle>
-        <DialogActions>
-          <Button onClick={handleClose} color="primary" autoFocus>
-            Agree
+                                }, 600);
+                            }),
+                        onRowUpdate: (newData, oldData) =>
+                            new Promise((resolve) => {
+                                setTimeout(() => {
+                                    resolve();
+                                    if (oldData) {
+                                        setData((prevState) => {
+                                            const data = [...prevState];
+                                            data[data.indexOf(oldData)] = newData;
+                                            return data
+                                        });
+                                        dbQ.queryWithArgNoreturn("UPDATE `drugs` SET  `barcode`=?,`name`=?,`scintificName`=?,`indication`=?,`sideEffect`=?,`content`=?  WHERE drugID=?",
+                                            [parseInt(newData.barcode), newData.name, newData.scintificName, newData.indication, newData.sideEffect, newData.content, oldData.drugID])
+                                    }
+                                }, 600);
+                            }),
+                        onRowDelete: (oldData) =>
+                            new Promise((resolve) => {
+                                setTimeout(() => {
+                                    resolve();
+                                    setData((prevState) => {
+                                        const data = [...prevState];
+                                        data.splice(data.indexOf(oldData), 1);
+                                        return data;
+                                    });
+                                    dbQ.queryWithArgNoreturn("DELETE FROM `drugs` WHERE drugID =?", oldData.drugID)
+                                }, 600);
+                            }),
+                    }}
+                    icons={tableIcons}
+                    options={{
+                        headerStyle: {
+                            backgroundColor: "#084177",
+                            color: '#FFF'
+                        },
+                        pageSizeOptions: [20, 30, 60],
+                        pageSize: 20
+                    }}
+                /> : <Skeleton animation="wave" />
+            }
+
+            <Dialog
+                open={open}
+                onClose={handleClose}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+            >
+
+                <DialogTitle id="alert-dialog-title">{"Please Fill All Inputs"}</DialogTitle>
+                <DialogActions>
+                    <Button onClick={handleClose} color="primary" autoFocus>
+                        Agree
           </Button>
-        </DialogActions>
-      </Dialog>
+                </DialogActions>
+            </Dialog>
         </div>
     );
 }

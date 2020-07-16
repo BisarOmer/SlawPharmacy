@@ -67,6 +67,31 @@ export default function Imports() {
         setUserID(localStorage.getItem("userID"))
     }, []);
 
+    const lastOneDrug = () => {
+        var result = dbQ.query("SELECT * FROM `imports`  ORDER BY `imports`.`importID`  DESC LIMIT 1 ")
+
+        setData((prevState) => {
+            const data = [...prevState];
+            data.push(result[0]);
+            return data
+        });
+
+    }
+
+    const updatedImport = async (importid, oldData) => {
+
+        var result = await dbQ.queryWithArg(
+            "SELECT i.`importID`, i.`pharmacyID`, i.`addBy`, i.`importNum`,  i.`cost`, i.`date`, i.`paid`,IF(i.paid=0,'Owe','Paid') as 'status',c.name,c.companyID,u.username " +
+            "FROM `imports` as i   INNER JOIN companies as c  ON i.from = c.companyID join users as u on i.addBy = u.userID WHERE i.importID = ?  ", importid)
+
+        setData((prevState) => {
+            const data = [...prevState];
+            data[data.indexOf(oldData)] = result[0];
+            return data
+        });
+    }
+
+
     const columns = [
         { title: 'Number', field: 'importNum' },
         { title: 'From', field: 'name', editComponent: props => (ListCompany(props)) },
@@ -201,9 +226,13 @@ export default function Imports() {
                                         return data
                                     });
 
-                                    dbQ.queryWithArgNoreturn("INSERT INTO `imports`(`pharmacyID`, `addBy`, `importNum`, `from`, `cost`, `date`, `paid`) VALUES (?,?,?,?,?,?,?)",
-                                        [ParmacyID, userID, newData.importNum, newData.name, newData.cost, newData.date, newData.status]
-                                    )
+                                    const insert = async () => {
+                                        await dbQ.queryWithArgNoreturn("INSERT INTO `imports`(`pharmacyID`, `addBy`, `importNum`, `from`, `cost`, `date`, `paid`) VALUES (?,?,?,?,?,?,?)",
+                                            [ParmacyID, userID, newData.importNum, newData.name, newData.cost, newData.date, newData.status]
+                                        )
+                                    }
+                                    insert()
+                                    lastOneDrug()
                                 }
                                 else {
                                     setOpenvalidation(true)
@@ -217,16 +246,25 @@ export default function Imports() {
                             setTimeout(() => {
                                 resolve();
                                 if (oldData) {
-                                    if (Object.keys(newData).length == 5) {
-                                        setData((prevState) => {
-                                            const data = [...prevState];
-                                            data[data.indexOf(oldData)] = newData;
-                                            return data
-                                        });
+                                    if (Object.keys(newData).length) {
+
+                                        // setData((prevState) => {
+                                        //     const data = [...prevState];
+                                        //     data[data.indexOf(oldData)] = newData;
+                                        //     return data
+                                        // });
+
                                         var newStatus = changeStatus(newData.status)
-                                        dbQ.queryWithArgNoreturn("UPDATE `imports` SET `importNum`=?,`addBy`=?,`from`=?,`cost`=?,`date`=?,`paid`=? WHERE importID =?",
-                                            [parseInt(newData.importNum), userID, newData.name, newData.cost, newData.date, newStatus, oldData.importID]
-                                        )
+                                        const update = async () => {
+
+                                            await dbQ.queryWithArgNoreturn("UPDATE `imports` SET `importNum`=?,`addBy`=?,`from`=?,`cost`=?,`date`=?,`paid`=? WHERE importID =?",
+                                                [parseInt(newData.importNum), userID, newData.name, newData.cost, newData.date, newStatus, oldData.importID]
+                                            )
+                                        }
+
+                                        update()
+                                        updatedImport(oldData.importID, oldData)
+
                                     }
                                     else {
                                         setOpenvalidation(true)

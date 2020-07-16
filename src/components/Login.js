@@ -21,8 +21,7 @@ import {
 function Copyright() {
   return (
     <Typography variant="body2" color="textSecondary" align="center">
-      {'Copyright © '}
-        Slaw Pharmacy
+      {'Slaw Pharmacy Copyright © '}        
       {' '}
       {new Date().getFullYear()}
     </Typography>

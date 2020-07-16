@@ -7,6 +7,8 @@ import Button from '@material-ui/core/Button';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogActions from '@material-ui/core/DialogActions';
 import Dialog from '@material-ui/core/Dialog';
+import Autocomplete from '@material-ui/lab/Autocomplete';
+import TextField from '@material-ui/core/TextField';
 
 // icons
 import AddBox from '@material-ui/icons/AddBox';
@@ -45,8 +47,8 @@ export default function Stock() {
 
     const columns = [
         { title: 'Barcode', field: 'barcode' },
-        { title: 'Name', field: 'name',editable:"never"},
-        { title: 'Type', field: 'type' },
+        { title: 'Name', field: 'name', editable: "never" },
+        { title: 'Type', field: 'type',editComponent: props => (ListTypes(props)) },
         { title: 'Price', field: 'price', type: "numeric" },
         { title: 'Cost ', field: 'cost', type: "numeric" },
         { title: 'Expire ', field: 'expire', type: 'date' },
@@ -80,6 +82,50 @@ export default function Stock() {
         setOpen(false);
     }
 
+    const lastOneDrug = () => {
+
+        var result = dbQ.query("SELECT p.productID, p.drugID, p.importNum, p.barcode, p.cost, p.price, p.expire, p.type, p.remainPacket, p.remainSheet, p.remainPill,d.name,d.drugID FROM products as p INNER JOIN drugs as d ON p.drugID=d.drugID ORDER BY p.productID DESC  limit 1 ")
+        // stockData.push(result[0])
+
+
+        setStock((prevState) => {
+            const data = [...prevState];
+            data.push(result[0]);
+            return data
+        });
+
+    }
+
+    const types = [
+        {type:"Pill"},
+        {type:"Injection"},
+        {type:"liquid"},
+        {type:"Cream"},
+        {type:"Tool"}
+    ]
+
+    function ListTypes(props) {
+        return (
+            <Autocomplete
+                id="tags-standard"
+                style={{ width: 150 }}
+                size="small"
+                fullWidth={true}
+                options={types}
+                getOptionLabel={(types) => types.type}
+                onChange={(event, value) => value && props.onChange(value.type)}
+                renderInput={(params) => (
+                    <TextField
+                        {...params}
+                        variant="standard"
+                        placeholder="Type"
+                        size="small"
+                    />
+                )}
+            />
+        )
+    }
+
     const [selectedRow, setSelectedRow] = React.useState(null);
 
     return (
@@ -90,9 +136,9 @@ export default function Stock() {
                 columns={columns}
                 data={stockData}
                 options={{
-                    pageSizeOptions:[20,30,60],
-                    pageSize:20,
-                    addRowPosition:'first'
+                    pageSizeOptions: [20, 30, 60],
+                    pageSize: 20,
+                    addRowPosition: 'first'
                 }}
                 editable={{
                     onRowAdd: (newData) =>
@@ -100,25 +146,32 @@ export default function Stock() {
                             setTimeout(() => {
                                 if (Object.keys.length < 11) {
                                     resolve();
-                                    setStock((prevState) => {
-                                        const data = [...prevState];
-                                        data.push(newData);
-                                        return data
-                                    });
+
+                                    // setStock((prevState) => {
+                                    //     const data = [...prevState];
+                                    //     data.push(newData);
+                                    //     return data
+                                    // });
 
 
-                                    var packet= newData.remainPacket
+                                    var packet = newData.remainPacket
                                     var sheet = newData.remainSheet
                                     var pill = newData.remainPill
 
-                                    var totalSheet = packet*sheet;
-                                    var totalPill = totalSheet*pill;
+                                    var totalSheet = packet * sheet;
+                                    var totalPill = totalSheet * pill;
 
-                                    dbQ.queryWithArgNoreturn(
-                                        "INSERT INTO `products`(`drugID`, `pharmacyID`,`importNum`, `barcode`, `cost`, `price`, `expire`, `type`, `packet`, `sheet`, `pill`, `remainPacket`, `remainSheet`, `remainPill`,`sheetPerPacket`,`pillPerSheet`) "+
-                                        " VALUES ((select drugID from drugs where barcode=?),?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                                        [newData.barcode,pharmacyID,newData.importNum, newData.barcode, newData.cost, newData.price, newData.expire, newData.type,packet,totalSheet,totalPill,packet,totalSheet,totalPill,sheet,pill ]
-                                    )
+                                    const insert = async () => {
+                                        await dbQ.queryWithArgNoreturn(
+                                            "INSERT INTO `products`(`drugID`, `pharmacyID`,`importNum`, `barcode`, `cost`, `price`, `expire`, `type`, `packet`, `sheet`, `pill`, `remainPacket`, `remainSheet`, `remainPill`,`sheetPerPacket`,`pillPerSheet`) " +
+                                            " VALUES ((select drugID from drugs where barcode=?),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                                            [newData.barcode, pharmacyID, newData.importNum, newData.barcode, newData.cost, newData.price, newData.expire, newData.type, packet, totalSheet, totalPill, packet, totalSheet, totalPill, sheet, pill]
+                                        )
+
+                                    }
+
+                                    insert()
+                                    lastOneDrug()
                                 }
                                 else {
                                     resolve();
@@ -139,15 +192,15 @@ export default function Stock() {
                                             return data
                                         });
 
-                                        var packet= newData.remainPacket
+                                        var packet = newData.remainPacket
                                         var sheet = newData.remainSheet
                                         var pill = newData.remainPill
-    
-                                        var totalSheet = packet*sheet;
-                                        var totalPill = totalSheet*pill;
+
+                                        var totalSheet = packet * sheet;
+                                        var totalPill = totalSheet * pill;
 
                                         dbQ.queryWithArgNoreturn("UPDATE `products` SET `drugID`=(select drugID from drugs where barcode=?), `importNum`=?,`barcode`=?,`cost`=?,`price`=?,`expire`=?,`type`=?,`packet`=?, `sheet`=?, `pill`=?, `remainPacket`=?, `remainSheet`=?, `remainPill`=?,sheetPerPacket=?,pillPerSheet=? WHERE productID=?",
-                                        [newData.barcode,newData.importNum,newData.barcode,newData.cost,newData.price,newData.expire,newData.type,packet,totalSheet,totalPill,packet,totalSheet,totalPill,sheet,pill,oldData.productID]
+                                            [newData.barcode, newData.importNum, newData.barcode, newData.cost, newData.price, newData.expire, newData.type, packet, totalSheet, totalPill, packet, totalSheet, totalPill, sheet, pill, oldData.productID]
                                         )
                                     }
                                     else
@@ -174,11 +227,11 @@ export default function Stock() {
                         backgroundColor: "#084177",
                         color: '#FFF'
                     },
-                    addRowPosition:'first',
+                    addRowPosition: 'first',
                     pageSizeOptions: [20, 30, 60],
                     pageSize: 20,
-                    exportAllData:true,
-                    exportButton:true,
+                    exportAllData: true,
+                    exportButton: true,
                     rowStyle: rowData => ({
                         backgroundColor: (selectedRow === rowData.tableData.id) ? '#EEE' : '#FFF'
                     })

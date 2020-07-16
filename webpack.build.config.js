@@ -1,8 +1,10 @@
 const webpack = require('webpack')
 const path = require('path')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
-const BabiliPlugin = require('babili-webpack-plugin')
+// const BabiliPlugin = require('babili-webpack-plugin')
+// const MinifyPlugin = require("babel-minify-webpack-plugin")
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+const JavaScriptObfuscator = require('webpack-obfuscator');
 
 // Any directories you will be adding code/files into, need to be added to this array so webpack will pick them up
 const defaultInclude = path.resolve(__dirname, 'src')
@@ -48,7 +50,11 @@ module.exports = {
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify('production')
     }),
-    new BabiliPlugin()
+    // new BabiliPlugin()
+    //  new MinifyPlugin(),
+     new JavaScriptObfuscator ({
+      rotateStringArray: true
+  }, ['excluded_bundle_name.js'])
   ],
   stats: {
     colors: true,

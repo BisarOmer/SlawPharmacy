@@ -46,6 +46,17 @@ export default function Companies() {
         setData(result)
     }, []);
 
+    const lastOneDrug = () => {
+        var result = dbQ.query("SELECT * FROM `companies`  ORDER BY `companies`.`companyID`  DESC LIMIT 1 ")
+
+        setData((prevState) => {
+            const data = [...prevState];
+            data.push(result[0]);
+            return data
+        });
+
+    }
+
     const handleClose = () => {
         setOpen(false);
     };
@@ -88,8 +99,12 @@ export default function Companies() {
                                         data.push(newData);
                                         return data
                                     });
-                                    dbQ.queryWithArgNoreturn("INSERT INTO `companies`( `name`, `address`, `phoneNum`) VALUES (?,?,?)",
-                                    [newData.name,newData.address,newData.phoneNum]);
+                                    const insert = async () => {
+                                        await dbQ.queryWithArgNoreturn("INSERT INTO `companies`( `name`, `address`, `phoneNum`) VALUES (?,?,?)",
+                                            [newData.name, newData.address, newData.phoneNum]);
+                                    }
+                                    insert()
+                                    lastOneDrug()
                                 }
                                 else {
                                     setOpen(true)
@@ -108,8 +123,9 @@ export default function Companies() {
                                         data[data.indexOf(oldData)] = newData;
                                         return data
                                     });
-                                    dbQ.queryWithArgNoreturn("UPDATE `companies` SET `name`=?,`address`=?,`phoneNum`=? WHERE companyID =? ",
-                                    [newData.name,newData.address,newData.phoneNum,oldData.companyID])
+
+                                     dbQ.queryWithArgNoreturn("UPDATE `companies` SET `name`=?,`address`=?,`phoneNum`=? WHERE companyID =? ",
+                                        [newData.name, newData.address, newData.phoneNum, oldData.companyID])
                                 }
                             }, 600);
                         }),
