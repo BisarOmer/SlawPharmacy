@@ -29,6 +29,10 @@ import ViewColumn from '@material-ui/icons/ViewColumn';
 import db from '../../Backend/db'
 var dbQ = new db();
 
+// store data 
+const Store = require('electron-store');
+const store = new Store();
+
 export default function Companies() {
 
     const [data, setData] = React.useState([]);
@@ -42,16 +46,24 @@ export default function Companies() {
     ]
 
     React.useEffect(() => {
-        var result = dbQ.query("select * from companies")
-        setData(result)
+        if (!store.get("companies")) {
+            var result = dbQ.query("select * from companies")
+            setData(result)
+            store.set("companies", result)
+        }
+        else {
+            setData(store.get("companies"))
+        }
     }, []);
 
-    const lastOneDrug = () => {
+    const AddLastOne = () => {
+
         var result = dbQ.query("SELECT * FROM `companies`  ORDER BY `companies`.`companyID`  DESC LIMIT 1 ")
 
         setData((prevState) => {
             const data = [...prevState];
             data.push(result[0]);
+            store.set("companies", data)
             return data
         });
 
@@ -94,17 +106,13 @@ export default function Companies() {
                             setTimeout(() => {
                                 if (Object.keys(newData).length == 3) {
                                     resolve();
-                                    setData((prevState) => {
-                                        const data = [...prevState];
-                                        data.push(newData);
-                                        return data
-                                    });
+
                                     const insert = async () => {
                                         await dbQ.queryWithArgNoreturn("INSERT INTO `companies`( `name`, `address`, `phoneNum`) VALUES (?,?,?)",
                                             [newData.name, newData.address, newData.phoneNum]);
                                     }
                                     insert()
-                                    lastOneDrug()
+                                    AddLastOne()
                                 }
                                 else {
                                     setOpen(true)
@@ -121,10 +129,11 @@ export default function Companies() {
                                     setData((prevState) => {
                                         const data = [...prevState];
                                         data[data.indexOf(oldData)] = newData;
+                                        store.set("companies", data)
                                         return data
                                     });
 
-                                     dbQ.queryWithArgNoreturn("UPDATE `companies` SET `name`=?,`address`=?,`phoneNum`=? WHERE companyID =? ",
+                                    dbQ.queryWithArgNoreturn("UPDATE `companies` SET `name`=?,`address`=?,`phoneNum`=? WHERE companyID =? ",
                                         [newData.name, newData.address, newData.phoneNum, oldData.companyID])
                                 }
                             }, 600);
@@ -136,6 +145,7 @@ export default function Companies() {
                                 setData((prevState) => {
                                     const data = [...prevState];
                                     data.splice(data.indexOf(oldData), 1);
+                                    store.set("companies", data)
                                     return data;
                                 });
                                 dbQ.queryWithArgNoreturn("DELETE FROM `companies` WHERE companyID = ?", oldData.companyID)
@@ -166,7 +176,7 @@ export default function Companies() {
                 <DialogActions>
                     <Button onClick={handleClose} color="primary" autoFocus>
                         Agree
-          </Button>
+                     </Button>
                 </DialogActions>
             </Dialog>
 

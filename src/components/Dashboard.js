@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { forwardRef } from 'react';
-
+//metrial
 import 'date-fns';
 import DateFnsUtils from '@date-io/date-fns';
 import {
@@ -8,12 +8,10 @@ import {
     KeyboardDatePicker,
 } from '@material-ui/pickers';
 import Typography from '@material-ui/core/Typography';
-
-
 import MaterialTable from 'material-table';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
-
+//icons
 import AddBox from '@material-ui/icons/AddBox';
 import ArrowDownward from '@material-ui/icons/ArrowDownward';
 import Check from '@material-ui/icons/Check';

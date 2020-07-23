@@ -29,13 +29,18 @@ import ViewColumn from '@material-ui/icons/ViewColumn';
 import db from '../../Backend/db'
 var dbQ = new db();
 
-// prin
+// store data 
+const Store = require('electron-store');
+const store = new Store();
+
+// print
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
 pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
 export default class Bills extends React.Component {
 
+  //data is all bills datadetail is one bills data
   constructor(props) {
     super(props);
     this.state = {
@@ -43,6 +48,7 @@ export default class Bills extends React.Component {
       dataDetail: [],
 
       cashierAndTotal: {},
+      pharmacyName: localStorage.getItem("pharmacyName"),
 
       open: false
     };
@@ -50,14 +56,24 @@ export default class Bills extends React.Component {
   }
 
   componentDidMount() {
-
-    const returnData = async () => {
-      var result = await dbQ.queryWithArg("SELECT b.bill_ID,b.pharmacyID,b.totalPrice,b.date,b.cashier, u.username,u.userID FROM `bills` as b INNER JOIN users as u on b.cashier=u.userID WHERE b.pharmacyID = ? ORDER BY b.bill_ID DESC", localStorage.getItem("pharmacyID"))
-      this.setState({ data: result })
-    }
     returnData()
   }
 
+  // after mount
+  returnData = async () => {
+    // do not have cached
+    if (!store.get("bills")) {
+      var result = await dbQ.queryWithArg("SELECT b.bill_ID,b.pharmacyID,b.totalPrice,b.date,b.cashier, u.username,u.userID FROM `bills` as b INNER JOIN users as u on b.cashier=u.userID WHERE b.pharmacyID = ? ORDER BY b.bill_ID DESC", localStorage.getItem("pharmacyID"))
+      this.setState({ data: result })
+      store.set("bills", result)
+    }
+    // have cache
+    else {
+      this.setState({ data: store.get("bills") })
+    }
+  }
+
+  //sold items are obect of arrya we have to change to arrya and get some specific value to print
   soldItemsIntoArray() {
 
     var tempArr
@@ -91,12 +107,12 @@ export default class Bills extends React.Component {
       },
 
       content: [
-        { text: 'Slaw Pharmacy', style: 'header' },
+        { text: this.state.pharmacyName, style: 'header' },
         { text: 'Bill: ' + this.state.cashierAndTotal.billID },
         { text: 'Date: ' + this.state.cashierAndTotal.date.toLocaleString() },
         { text: 'Cashier: ' + this.state.cashierAndTotal.cashhier },
         { text: 'Items', style: 'subheader' },
-        { text: 'Total = ' +this.state.cashierAndTotal.totalPrice, style: 'subheader' },
+        { text: 'Total = ' + this.state.cashierAndTotal.totalPrice, style: 'subheader' },
         { text: 'Developed By Slaw Company', alignment: 'center' },
       ]
       ,
@@ -137,15 +153,17 @@ export default class Bills extends React.Component {
       }
     }
 
+    // arrya of sold items ready to print
     var items = this.soldItemsIntoArray()
 
+    //addingg to table 
     for (var i = 0; i < items.length; i++) {
       tableObject.table.body.push(items[i])
     }
-
+    //adding table to its index
     dd.content.splice(5, 0, tableObject)
 
-    pdfMake.createPdf(dd).open();
+    pdfMake.createPdf(dd).print();
   }
 
   render() {
@@ -168,8 +186,6 @@ export default class Bills extends React.Component {
       { title: 'Total Price', field: 'totalPrice' },
 
     ]
-
-    // const[open, setOpen] = React.useState(false);
 
     const tableIcons = {
       Add: forwardRef((props, ref) => <AddBox {...props} ref={ref} />),
@@ -222,10 +238,10 @@ export default class Bills extends React.Component {
                       rowData.bill_ID
                     )
 
-                    
+
                   var billDetail = { billID: rowData.bill_ID, date: rowData.date, totalPrice: rowData.totalPrice, cashhier: rowData.username }
 
-                  this.setState({ dataDetail: result,cashierAndTotal:billDetail })
+                  this.setState({ dataDetail: result, cashierAndTotal: billDetail })
 
                 }
 
@@ -246,7 +262,7 @@ export default class Bills extends React.Component {
           }}
         />
 
-        {/* view sold items wich belong the bill */}
+        {/* view sold items which belong the bill */}
         <Dialog onClose={handleClose} aria-labelledby="customized-dialog-title" open={this.state.open} maxWidth="xl" fullWidth={true}>
           <MaterialTable
             title="Bill's Detail"

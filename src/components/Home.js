@@ -49,14 +49,13 @@ import Clear from '@material-ui/icons/Clear';
 import db from '../../Backend/db'
 var dbQ = new db();
 
-// prin
+// print
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
 pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
 // store data 
 const Store = require('electron-store');
-
 const store = new Store();
 
 
@@ -73,6 +72,7 @@ export default class Home extends Component {
       barcode: "",
       totalPrice: 0,
       billID: 0,
+      pharmacyName: localStorage.getItem("pharmacyName"),
 
       userID: 0,
       pharmacyID: 0,
@@ -97,18 +97,22 @@ export default class Home extends Component {
 
   componentDidMount() {
     this.setState({ userID: localStorage.getItem("userID"), pharmacyID: localStorage.getItem("pharmacyID") })
-    // this.showExpireNotification()
+    this.showExpireNotification()
   }
 
   async showExpireNotification() {
-    var expires = await dbQ.query("select COUNT(productID) as totalExpired FROM products WHERE expire < CURRENT_DATE")
-    if (expires) {
-      let myNotification = new Notification('Expire', {
-        body: expires[0].totalExpired + ' Products Expired'
-      })
+    if (!store.get("expireShowed", false)) {
+      var expires = await dbQ.query("select COUNT(productID) as totalExpired FROM products WHERE expire < CURRENT_DATE")
+      if (expires) {
+        let myNotification = new Notification('Expire', {
+          body: expires[0].totalExpired + ' Products Expired'
+        })
 
-      myNotification.onclick = () => {
-        this.props.history.push("/drawer/report")
+        myNotification.onclick = () => {
+          this.props.history.push("/drawer/report")
+        }
+
+        store.set("expireShowed",true)
       }
     }
   }
@@ -144,7 +148,7 @@ export default class Home extends Component {
         height: 'auto'
       },
       content: [
-        { text: 'Slaw Pharmacy', style: 'header' },
+        { text: this.state.pharmacyName, style: 'header' },
         { text: 'Bill: ' + this.state.billID },
         { text: 'Date: ' + date.toLocaleString() },
         { text: 'Cashier: ' + localStorage.getItem('username') },
@@ -198,7 +202,7 @@ export default class Home extends Component {
 
     dd.content.splice(5, 0, tableObject)
 
-    pdfMake.createPdf(dd).open();
+    pdfMake.createPdf(dd).print();
   }
 
   render() {
@@ -571,7 +575,7 @@ export default class Home extends Component {
             {/* <Button variant="outlined" size="small" onClick={this.PrintBill}>Print</Button> */}
           </div>
 
-          <div className="flex" style={{width:'22%'}}>
+          <div className="flex" style={{ width: '22%' }}>
             <Box fontSize={15} >
               Print
             </Box>

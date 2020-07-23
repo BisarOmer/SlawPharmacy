@@ -78,7 +78,7 @@ export default function Login() {
 
     if (username && password) {
 
-      var result = await dbQ.queryWithArg("select userID,employee,username,role from users where username=? and password=?", [username, password]);
+      var result = await dbQ.queryWithArg("select u.userID,u.employee,u.username,u.role,p.name,p.pharmacyID from users as u INNER JOIN pharmacies as p on u.employee=p.pharmacyID where username=? and password=? ", [username, password]);
 
       if (result.length) {
 
@@ -100,6 +100,7 @@ export default function Login() {
           var pharmaciesString = JSON.stringify(pharmacies)
           localStorage.setItem("Pharmacies", pharmaciesString)
           localStorage.setItem("pharmacyID", result[0].employee)
+          localStorage.setItem("pharmacyName", result[0].name)
           history.push("/drawer/")
         }
 

@@ -171,7 +171,7 @@ export default function DrawerPage() {
     localStorage.removeItem('username')
     localStorage.removeItem('role')
     localStorage.removeItem('Pharmacies')
-
+    localStorage.clear();
     history.push('/login')
 
   }

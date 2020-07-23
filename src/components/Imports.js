@@ -35,6 +35,10 @@ import ViewColumn from '@material-ui/icons/ViewColumn';
 import db from '../../Backend/db'
 var dbQ = new db();
 
+// store data 
+const Store = require('electron-store');
+const store = new Store();
+
 
 export default function Imports() {
 
@@ -53,12 +57,19 @@ export default function Imports() {
 
 
     React.useEffect(() => {
-        var result = dbQ.query(
-            "SELECT i.`importID`, i.`pharmacyID`, i.`addBy`, i.`importNum`,  i.`cost`, i.`date`, i.`paid`,IF(i.paid=0,'Owe','Paid') as 'status',c.name,c.companyID,u.username " +
-            " FROM `imports` as i   INNER JOIN companies as c  ON i.from = c.companyID join users as u on i.addBy = u.userID" +
-            " ORDER BY i.`importID` DESC"
-        )
-        setData(result)
+        if (!store.get("imports")) {
+
+            var result = dbQ.query(
+                "SELECT i.`importID`, i.`pharmacyID`, i.`addBy`, i.`importNum`,  i.`cost`, i.`date`, i.`paid`,IF(i.paid=0,'Owe','Paid') as 'status',c.name,c.companyID,u.username " +
+                " FROM `imports` as i   INNER JOIN companies as c  ON i.from = c.companyID join users as u on i.addBy = u.userID" +
+                " ORDER BY i.`importID` DESC"
+            )
+            setData(result)
+            store.set("imports", result)
+        }
+        else {
+            setData(store.get("imports"))
+        }
 
         var returnedCompanies = dbQ.query("select companyID,name from companies")
         setCompanies(returnedCompanies)
@@ -67,12 +78,13 @@ export default function Imports() {
         setUserID(localStorage.getItem("userID"))
     }, []);
 
-    const lastOneDrug = () => {
+    const AddLastOne = () => {
         var result = dbQ.query("SELECT * FROM `imports`  ORDER BY `imports`.`importID`  DESC LIMIT 1 ")
 
         setData((prevState) => {
             const data = [...prevState];
             data.push(result[0]);
+            store.set("imports", data)
             return data
         });
 
@@ -87,10 +99,10 @@ export default function Imports() {
         setData((prevState) => {
             const data = [...prevState];
             data[data.indexOf(oldData)] = result[0];
+            store.set("imports", data)
             return data
         });
     }
-
 
     const columns = [
         { title: 'Number', field: 'importNum' },
@@ -220,11 +232,6 @@ export default function Imports() {
 
                                 if (Object.keys(newData).length == 5) {
                                     resolve();
-                                    setData((prevState) => {
-                                        const data = [...prevState];
-                                        data.push(newData);
-                                        return data
-                                    });
 
                                     const insert = async () => {
                                         await dbQ.queryWithArgNoreturn("INSERT INTO `imports`(`pharmacyID`, `addBy`, `importNum`, `from`, `cost`, `date`, `paid`) VALUES (?,?,?,?,?,?,?)",
@@ -232,7 +239,7 @@ export default function Imports() {
                                         )
                                     }
                                     insert()
-                                    lastOneDrug()
+                                    AddLastOne()
                                 }
                                 else {
                                     setOpenvalidation(true)
@@ -280,6 +287,7 @@ export default function Imports() {
                                 setData((prevState) => {
                                     const data = [...prevState];
                                     data.splice(data.indexOf(oldData), 1);
+                                    store.set("imports", data)
                                     return data
                                 });
 

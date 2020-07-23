@@ -10,9 +10,6 @@ import Button from '@material-ui/core/Button';
 import Autocomplete from '@material-ui/lab/Autocomplete';
 import TextField from '@material-ui/core/TextField';
 
-
-
-
 //icon
 import AddBox from '@material-ui/icons/AddBox';
 import ArrowDownward from '@material-ui/icons/ArrowDownward';
@@ -33,7 +30,6 @@ import ViewColumn from '@material-ui/icons/ViewColumn';
 
 //db 
 import db from '../../Backend/db'
-
 var dbQ = new db();
 
 export default class Users extends React.Component {
@@ -54,7 +50,6 @@ export default class Users extends React.Component {
         this.fetchUsers()
     }
 
-
     async fetchUsers() {
         var result = await dbQ.queryWithArg(
             "SELECT users.userID, users.employee, users.username, users.password, users.role, pharmacies.name, pharmacies.pharmacyID FROM users " +
@@ -62,6 +57,20 @@ export default class Users extends React.Component {
             this.state.PharmacyID)
 
         this.setState({ data: result, userID: localStorage.getItem("userID") })
+    }
+
+    AddLastOne = () => {
+
+        var result = dbQ.query
+            ("SELECT users.userID, users.employee, users.username, users.password, users.role, pharmacies.name, pharmacies.pharmacyID FROM users " +
+                " INNER JOIN pharmacies ON users.employee= pharmacies.pharmacyID where  pharmacies.pharmacyID =? ORDER BY users.userID DESC LIMIT 1 ")
+
+        setData((prevState) => {
+            const data = [...prevState];
+            data.push(result[0]);
+            return data
+        });
+
     }
 
 
@@ -125,8 +134,6 @@ export default class Users extends React.Component {
             ViewColumn: forwardRef((props, ref) => <ViewColumn {...props} ref={ref} />)
         };
 
-
-
         return (
             <div>
 
@@ -140,14 +147,12 @@ export default class Users extends React.Component {
                                 setTimeout(() => {
                                     if (Object.keys(newData).length == 3) {
                                         resolve();
-                                        setData((prevState) => {
-                                            const data = [...prevState];
-                                            data.push(newData);
-                                            return data
-                                        });
+
                                         dbQ.queryWithArgNoreturn("INSERT INTO `users`(`employee`, `username`, `password`, `role`) VALUES (?,?,?,?)",
                                             [this.state.PharmacyID, newData.username, newData.password, newData.role]
                                         )
+
+                                        this.AddLastOne()
                                     }
                                     else {
                                         this.setState({ open: true })

@@ -8,6 +8,7 @@ builds/
 dist/
 node_modules/
 resources/
+.vscode
 *.compiled.*
 
 # Folder config file #

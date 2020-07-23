@@ -30,6 +30,10 @@ import ViewColumn from '@material-ui/icons/ViewColumn';
 import db from '../../Backend/db'
 var dbQ = new db();
 
+// store data 
+const Store = require('electron-store');
+const store = new Store();
+
 export default function Drugs() {
 
     const [data, setData] = React.useState([]);
@@ -47,24 +51,31 @@ export default function Drugs() {
     ]
 
     React.useEffect(() => {
-        var result = dbQ.query("select * from drugs")
-        setData(result)
-        setload(true)
+        if (!store.get("drugs")) {
+
+            var result = dbQ.query("select * from drugs")
+            setData(result)
+            store.set("drugs", result)
+            setload(true)     
+        }
+        else {
+            setData(store.get("drugs"))
+            setload(true)
+        }
 
     }, []);
 
-    const lastOneDrug = () => {
+    //this make added item editable before this the user could not edit without refresh
+    const AddLastOne = () => {
 
         var result = dbQ.query("SELECT * FROM `drugs` ORDER BY `drugs`.`drugID` DESC LIMIT 1 ")
-        
-
 
         setData((prevState) => {
             const data = [...prevState];
             data.push(result[0]);
+            store.set("drugs",data)
             return data
         });
-
     }
 
     const handleClose = () => {
@@ -104,18 +115,13 @@ export default function Drugs() {
                                 setTimeout(() => {
                                     if (Object.keys(newData).length == 6) {
                                         resolve();
-                                        setData((prevState) => {
-                                            const data = [...prevState];
-                                            data.push(newData);
-                                            return data
-                                        });
 
                                         const insert = async () => {
                                             await dbQ.queryWithArgNoreturn("INSERT INTO `drugs` (`barcode`, `name`, `scintificName`, `indication`, `sideEffect`, `content`)  VALUES (?,?,?,?,?,?)",
                                                 [parseInt(newData.barcode), newData.name, newData.scintificName, newData.indication, newData.sideEffect, newData.content]);
                                         }
                                         insert()
-                                        lastOneDrug()
+                                        AddLastOne()
                                     }
                                     else {
                                         setOpen(true)
@@ -129,11 +135,14 @@ export default function Drugs() {
                                 setTimeout(() => {
                                     resolve();
                                     if (oldData) {
+
                                         setData((prevState) => {
                                             const data = [...prevState];
                                             data[data.indexOf(oldData)] = newData;
+                                            store.set("drugs", data)
                                             return data
                                         });
+
                                         dbQ.queryWithArgNoreturn("UPDATE `drugs` SET  `barcode`=?,`name`=?,`scintificName`=?,`indication`=?,`sideEffect`=?,`content`=?  WHERE drugID=?",
                                             [parseInt(newData.barcode), newData.name, newData.scintificName, newData.indication, newData.sideEffect, newData.content, oldData.drugID])
                                     }
@@ -146,9 +155,11 @@ export default function Drugs() {
                                     setData((prevState) => {
                                         const data = [...prevState];
                                         data.splice(data.indexOf(oldData), 1);
+                                        store.set("drugs", data)
                                         return data;
                                     });
                                     dbQ.queryWithArgNoreturn("DELETE FROM `drugs` WHERE drugID =?", oldData.drugID)
+                                    store.set(data)
                                 }, 600);
                             }),
                     }}

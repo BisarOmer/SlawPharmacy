@@ -32,6 +32,10 @@ import ViewColumn from '@material-ui/icons/ViewColumn';
 import db from '../../Backend/db'
 var dbQ = new db();
 
+// store data 
+const Store = require('electron-store');
+const store = new Store();
+
 export default function Stock() {
 
     const [stockData, setStock] = React.useState();
@@ -39,8 +43,14 @@ export default function Stock() {
     const [pharmacyID, setPharmacyID] = React.useState();
 
     React.useEffect(() => {
-        var result = dbQ.query("SELECT p.productID, p.drugID, p.importNum, p.barcode, p.cost, p.price, p.expire, p.type, p.remainPacket, p.remainSheet, p.remainPill,d.name,d.drugID FROM products as p INNER JOIN drugs as d ON p.drugID=d.drugID")
-        setStock(result)
+        if (!store.get("stock")) {
+            var result = dbQ.query("SELECT p.productID, p.drugID, p.importNum, p.barcode, p.cost, p.price, p.expire, p.type, p.remainPacket, p.remainSheet, p.remainPill,d.name,d.drugID FROM products as p INNER JOIN drugs as d ON p.drugID=d.drugID")
+            setStock(result)
+            store.set("stock", result)
+        }
+        else {
+            setStock(store.get("stock"))   
+        }
         setPharmacyID(localStorage.getItem('pharmacyID'))
     }, []);
 
@@ -48,7 +58,7 @@ export default function Stock() {
     const columns = [
         { title: 'Barcode', field: 'barcode' },
         { title: 'Name', field: 'name', editable: "never" },
-        { title: 'Type', field: 'type',editComponent: props => (ListTypes(props)) },
+        { title: 'Type', field: 'type', editComponent: props => (ListTypes(props)) },
         { title: 'Price', field: 'price', type: "numeric" },
         { title: 'Cost ', field: 'cost', type: "numeric" },
         { title: 'Expire ', field: 'expire', type: 'date' },
@@ -82,26 +92,25 @@ export default function Stock() {
         setOpen(false);
     }
 
-    const lastOneDrug = () => {
+    const AddLastOne = () => {
 
         var result = dbQ.query("SELECT p.productID, p.drugID, p.importNum, p.barcode, p.cost, p.price, p.expire, p.type, p.remainPacket, p.remainSheet, p.remainPill,d.name,d.drugID FROM products as p INNER JOIN drugs as d ON p.drugID=d.drugID ORDER BY p.productID DESC  limit 1 ")
-        // stockData.push(result[0])
-
 
         setStock((prevState) => {
             const data = [...prevState];
             data.push(result[0]);
+            store.set("stock", data)
             return data
         });
 
     }
 
     const types = [
-        {type:"Pill"},
-        {type:"Injection"},
-        {type:"liquid"},
-        {type:"Cream"},
-        {type:"Tool"}
+        { type: "Pill" },
+        { type: "Injection" },
+        { type: "liquid" },
+        { type: "Cream" },
+        { type: "Tool" }
     ]
 
     function ListTypes(props) {
@@ -171,7 +180,7 @@ export default function Stock() {
                                     }
 
                                     insert()
-                                    lastOneDrug()
+                                    AddLastOne()
                                 }
                                 else {
                                     resolve();
@@ -189,6 +198,7 @@ export default function Stock() {
                                         setStock((prevState) => {
                                             const data = [...prevState];
                                             data[data.indexOf(oldData)] = newData;
+                                            store.set("stock", data)
                                             return data
                                         });
 
@@ -215,6 +225,7 @@ export default function Stock() {
                                 setStock((prevState) => {
                                     const data = [...prevState];
                                     data.splice(data.indexOf(oldData), 1);
+                                    store.set("stock", data)
                                     return data
                                 });
                                 dbQ.queryWithArgNoreturn("DELETE FROM `products` WHERE productID=?", oldData.productID)
