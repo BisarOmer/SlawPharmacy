@@ -59,7 +59,7 @@ export default class Users extends React.Component {
         this.setState({ data: result, userID: localStorage.getItem("userID") })
     }
 
-    AddLastOne = () => {
+    AddLastOne (){
 
         var result = dbQ.query
             ("SELECT users.userID, users.employee, users.username, users.password, users.role, pharmacies.name, pharmacies.pharmacyID FROM users " +

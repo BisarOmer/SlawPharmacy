@@ -56,11 +56,11 @@ export default class Bills extends React.Component {
   }
 
   componentDidMount() {
-    returnData()
+    this.returnData()
   }
 
   // after mount
-  returnData = async () => {
+  async returnData () {
     // do not have cached
     if (!store.get("bills")) {
       var result = await dbQ.queryWithArg("SELECT b.bill_ID,b.pharmacyID,b.totalPrice,b.date,b.cashier, u.username,u.userID FROM `bills` as b INNER JOIN users as u on b.cashier=u.userID WHERE b.pharmacyID = ? ORDER BY b.bill_ID DESC", localStorage.getItem("pharmacyID"))

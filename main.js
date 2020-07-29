@@ -8,6 +8,16 @@ const { session } = require('electron')
 const path = require('path')
 const url = require('url')
 
+// creating 
+const mysql = require('mysql')
+
+const connection = mysql.createConnection({
+  host: 'localhost',
+  user: 'root',
+  password: '@2tGSN6nmBRXTzq',
+  database: 'slawpharmacy'
+});
+
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
@@ -99,6 +109,10 @@ app.on('window-all-closed', () => {
 
     // })
 
+    connection.end(function(err) {
+      // The connection is terminated now
+    });
+
     app.quit()
   }
 })
@@ -111,20 +125,7 @@ app.on('activate', () => {
   }
 })
 
-
-
-
-const mysql = require('mysql')
-
-const connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '',
-  database: 'slawpharmacy'
-});
-
 connection.connect(function (err) {
-
   if (err) {
     console.log('connect', err);
   }
@@ -170,8 +171,31 @@ ipcMain.on('queryWithArg', function (event, sql, para) {
 
 });
 
-// ipcMain.on('asynchronous-message', (event, arg) => {
-//   console.log(arg) // prints "ping"
-//   event.reply('asynchronous-reply', 'pong')
-// })
+// backup 
+const CronJob = require('E:/SP/node_modules/cron/lib/cron.js').CronJob;
+const { exec } = require("child_process");
+
+const oneDrivePath = process.env.OneDrive
+
+const job = new CronJob('24 22 * * * *', function () {
+
+  const d = new Date();
+
+  exec(`mysqldump --defaults-extra-file=D:/mysqldump.cnf  --routines --events --triggers --single-transaction slawpharmacy |` +
+    ` openssl smime -encrypt -binary -text -aes256 -out ${oneDrivePath}/database.sql.enc -outform DER D:/mysqldump-secure.pub.pem`, (error, stdout, stderr) => {
+      if (error) {
+        console.log(`error: ${error.message}`);
+        return;
+      }
+      if (stderr) {
+        console.log(`stderr: ${stderr}`);
+        return;
+      }
+
+    });
+
+
+}, null, true);
+
+
 

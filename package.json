@@ -27,6 +27,7 @@
     "@material-ui/icons": "^4.9.1",
     "@material-ui/lab": "^4.0.0-alpha.56",
     "array-unique": "^0.3.2",
+    "cron": "^1.8.2",
     "electron-store": "^5.2.0",
     "material-table": "^1.59.0",
     "mysql": "^2.18.1",
