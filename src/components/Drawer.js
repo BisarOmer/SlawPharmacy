@@ -193,12 +193,12 @@ export default function DrawerPage() {
               <ListItemText primary="Pharmacy" />
             </ListItem>
           </Link>
-          <Link to="/drawer/backup" className={classes.link}>
+          {/* <Link to="/drawer/backup" className={classes.link}>
             <ListItem button key="Backup" selected={isActive('#/drawer/backup')}>
               <ListItemIcon> <CloudUploadOutlinedIcon /> </ListItemIcon>
               <ListItemText primary="Backup" />
             </ListItem>
-          </Link>
+          </Link> */}
         </div>
       )
     }

@@ -101,13 +101,13 @@ app.on('window-all-closed', () => {
 
   if (process.platform !== 'darwin') {
 
-    // session.defaultSession.clearStorageData({
-    //   // without set origin options
-    //   storages: ['localstorage', 'caches', 'indexdb']
-    // }, () => {
-    //   console.log("local deleted");
+    session.defaultSession.clearStorageData({
+      // without set origin options
+      storages: ['localstorage', 'caches', 'indexdb']
+    }, () => {
+      console.log("local deleted");
 
-    // })
+    })
 
     connection.end(function(err) {
       // The connection is terminated now
@@ -172,17 +172,18 @@ ipcMain.on('queryWithArg', function (event, sql, para) {
 });
 
 // backup 
-const CronJob = require('E:/SP/node_modules/cron/lib/cron.js').CronJob;
+const CronJob = require('cron/lib/cron.js').CronJob;
 const { exec } = require("child_process");
 
 const oneDrivePath = process.env.OneDrive
+const PublicKey = process.env.PublicKey
 
 const job = new CronJob('24 22 * * * *', function () {
 
   const d = new Date();
 
-  exec(`mysqldump --defaults-extra-file=D:/mysqldump.cnf  --routines --events --triggers --single-transaction slawpharmacy |` +
-    ` openssl smime -encrypt -binary -text -aes256 -out ${oneDrivePath}/database.sql.enc -outform DER D:/mysqldump-secure.pub.pem`, (error, stdout, stderr) => {
+  exec(`mysqldump --login-path=local  --routines --events --triggers --single-transaction slawpharmacy |` +
+    ` openssl smime -encrypt -binary -text -aes256  -outform DER ${PublicKey} | gzip > ${oneDrivePath}/Backup.gz `, (error, stdout, stderr) => {
       if (error) {
         console.log(`error: ${error.message}`);
         return;

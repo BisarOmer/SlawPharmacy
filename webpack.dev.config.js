@@ -16,7 +16,7 @@ module.exports = {
           { loader: "css-loader" },
           { loader: "postcss-loader" },
         ],
-        include: defaultInclude,
+        include: [path.resolve(__dirname, 'node_modules/fontsource-roboto'),defaultInclude],
       },
       {
         test: /\.jsx?$/,
@@ -31,16 +31,19 @@ module.exports = {
       {
         test: /\.(eot|svg|ttf|woff|woff2)$/,
         use: [
-          { loader: "file-loader?name=font/[name]__[hash:base64:5].[ext]" },
+          {
+            loader: "file-loader?name=font/[name]__[hash:base64:5].[ext]"
+          },
         ],
-        include: defaultInclude,
+        include: [path.resolve(__dirname, 'node_modules/fontsource-roboto'),defaultInclude],
+        
       },
     ],
   },
   target: "electron-renderer",
   plugins: [
-    new HtmlWebpackPlugin({ 
-      title: " Slaw Pharmacy " ,
+    new HtmlWebpackPlugin({
+      title: " Slaw Pharmacy ",
     }),
     new webpack.DefinePlugin({
       "process.env.NODE_ENV": JSON.stringify("development"),

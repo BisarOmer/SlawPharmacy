@@ -19,7 +19,7 @@ module.exports = {
           'css-loader',
           'postcss-loader'
         ],
-        include: defaultInclude
+        include: [path.resolve(__dirname, 'node_modules/fontsource-roboto'),defaultInclude],
       },
       {
         test: /\.jsx?$/,
@@ -34,7 +34,8 @@ module.exports = {
       {
         test: /\.(eot|svg|ttf|woff|woff2)$/,
         use: [{ loader: 'file-loader?name=font/[name]__[hash:base64:5].[ext]' }],
-        include: defaultInclude
+        include: [path.resolve(__dirname, 'node_modules/fontsource-roboto'),defaultInclude],
+        
       }
     ]
   },

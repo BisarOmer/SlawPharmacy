@@ -198,17 +198,6 @@ export default function Imports() {
         setOpenvalidation(false);
     };
 
-    const ParseToDate = (date) => {
-        if (date) {
-            let year = date.getFullYear();
-            let month = (date.getUTCMonth() + 1 <= 9) ? "0" + (date.getUTCMonth() + 1) : date.getUTCMonth() + 1
-            let day = (date.getDate() <= 9) ? "0" + (date.getDate()) : date.getDate()
-            return year + '-' + month + '-' + day
-        } else {
-            return date;
-        }
-    }
-
     // change owe and paid to 0,1
     const changeStatus = (value) => {
         var smallCaseValue = value.toLowerCase();
@@ -303,6 +292,7 @@ export default function Imports() {
                         onClick: (event, rowData) => {
 
                             setHeader(rowData)
+                            console.log(rowData);
                             const returnData = async () => {
                                 var result = await dbQ.queryWithArg
                                     (
@@ -350,7 +340,7 @@ export default function Imports() {
                                 Cost: {headerData.cost}
                             </Typography>
                             <Typography variant="h6" gutterBottom>
-                                Date: {ParseToDate(headerData.date)}
+                                Date: {headerData.date.toString().substring(0,10)}
                             </Typography>
                             <Typography variant="h6" gutterBottom>
                                 Status: {headerData.status}

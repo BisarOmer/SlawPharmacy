@@ -29,6 +29,7 @@
     "array-unique": "^0.3.2",
     "cron": "^1.8.2",
     "electron-store": "^5.2.0",
+    "fontsource-roboto": "^2.2.6",
     "material-table": "^1.59.0",
     "mysql": "^2.18.1",
     "pdfmake": "^0.1.65",
