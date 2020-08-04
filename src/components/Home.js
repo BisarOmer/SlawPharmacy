@@ -431,7 +431,7 @@ export default class Home extends Component {
           <Autocomplete
             size="small"
             id="asynchronous"
-            style={{ width: 223 }}
+            style={{ width: 210 }}
             open={this.state.openAutoComplete}
             onOpen={() => {
               this.setState({ openAutoComplete: true })
@@ -455,6 +455,7 @@ export default class Home extends Component {
             )}
           />
         </div>
+        
         {/* control row  */}
         <div className='flex'>
 

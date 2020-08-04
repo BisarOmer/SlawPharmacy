@@ -56,6 +56,10 @@ import PharmaciesReport from './PharmaciesReport'
 import PharmaciesUser from './PharmaciesUser'
 import PharmaciesInsight from './PharmaciesInsight'
 
+// store data 
+const Store = require('electron-store');
+const store = new Store();
+
 
 
 
@@ -166,14 +170,17 @@ export default function DrawerPage() {
   };
 
   const logout = () => {
-    localStorage.removeItem('userID')
-    localStorage.removeItem('pharmacyID')
-    localStorage.removeItem('username')
-    localStorage.removeItem('role')
-    localStorage.removeItem('Pharmacies')
+  
     localStorage.clear();
+    store.set("expireShowed",false)
     history.push('/login')
 
+    store.delete("bills")
+    store.delete("companies")
+    store.delete("drugs")
+    store.delete("imports")
+    store.delete("stock")
+    store.delete("stock")
   }
 
 

@@ -159,7 +159,8 @@ export default function Companies() {
                         color: '#FFF'
                     },
                     pageSizeOptions: [20, 30, 60],
-                    pageSize: 20
+                    pageSize: 20,
+                    addRowPosition: 'first'
                 }}
             />
 

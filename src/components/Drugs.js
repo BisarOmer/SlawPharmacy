@@ -170,7 +170,8 @@ export default function Drugs() {
                             color: '#FFF'
                         },
                         pageSizeOptions: [20, 30, 60],
-                        pageSize: 20
+                        pageSize: 20,
+                        addRowPosition: 'first'
                     }}
                 /> : <Skeleton animation="wave" />
             }

@@ -8,6 +8,10 @@ const { session } = require('electron')
 const path = require('path')
 const url = require('url')
 
+// store data 
+const Store = require('electron-store');
+const store = new Store();
+
 // creating 
 const mysql = require('mysql')
 
@@ -104,10 +108,14 @@ app.on('window-all-closed', () => {
     session.defaultSession.clearStorageData({
       // without set origin options
       storages: ['localstorage', 'caches', 'indexdb']
-    }, () => {
-      console.log("local deleted");
-
     })
+
+    store.delete("bills")
+    store.delete("companies")
+    store.delete("drugs")
+    store.delete("imports")
+    store.delete("stock")
+    store.delete("stock")
 
     connection.end(function(err) {
       // The connection is terminated now
