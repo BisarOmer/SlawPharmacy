@@ -71,6 +71,7 @@ export default class Home extends Component {
       quantity: 1,
       barcode: "",
       totalPrice: 0,
+      totalCost:0,
       billID: 0,
       pharmacyName: localStorage.getItem("pharmacyName"),
 
@@ -103,7 +104,8 @@ export default class Home extends Component {
   async showExpireNotification() {
     if (!store.get("expireShowed", false)) {
       var expires = await dbQ.query("select COUNT(productID) as totalExpired FROM products WHERE expire < CURRENT_DATE")
-      if (expires) {
+     
+      if (expires[0].totalExpired!="0") {
         let myNotification = new Notification('Expire', {
           body: expires[0].totalExpired + ' Products Expired'
         })
@@ -232,12 +234,35 @@ export default class Home extends Component {
       else {
         store.set('isPrint', true); this.setState({ isPrint: true })
       }
-      // this.state.isPrint ? this.setState({isPrint:false}):this.setState({isPrint:true})
+    }
+
+    const quantityValidation = () =>{
+      if(this.state.selectedMenu=="Packet"){
+        return "p.remainPacket"
+      }
+      else if(this.state.selectedMenu=="Sheet"){
+        return "p.remainSheet"
+      }
+      else{
+        return "p.remainPill"
+      }
+    }
+
+    const PriceByKind = () =>{
+      if(this.state.selectedMenu=="Packet"){
+        return "p.price"
+      }
+      else if(this.state.selectedMenu=="Sheet"){
+        return "p.price/p.sheetPerPacket AS price"
+      }
+      else{
+        return "p.price/p.sheetPerPacket/p.pillPerSheet AS price"
+      }
     }
 
     const sellByEnter = async () => {
 
-      var result = await dbQ.queryWithArg("select p.productID,p.type,p.barcode,p.expire,p.price,p.pillPerSheet,p.sheetPerPacket,d.name,d.drugID from products as p INNER JOIN drugs as d ON p.barcode=d.barcode where p.barcode = ? and p.pharmacyID=? and p.remainPacket >= ?",
+      var result = await dbQ.queryWithArg("select p.productID,p.type,p.barcode,p.expire,p.cost, "+PriceByKind()+" ,p.pillPerSheet,p.sheetPerPacket,d.name,d.drugID from products as p INNER JOIN drugs as d ON p.barcode=d.barcode where p.barcode = ? and p.pharmacyID=? and "+ quantityValidation() +">= ? and p.expire > CURRENT_DATE",
         [this.state.barcode, this.state.pharmacyID, this.state.quantity])
 
       if (result.length) {
@@ -247,19 +272,25 @@ export default class Home extends Component {
       }
 
       if (result.length > 1) {
-        var moreThanPneReturned = result.map((item) => ({
-          ...item, expire: ParseToDate(item.expire),
-          quantity: this.state.quantity, total: (item.price * this.state.quantity), kind: this.state.selectedMenu
+        
+        var moreThanOneReturned = result.map((item) => ({
+          ...item, 
+          expire: ParseToDate(item.expire),
+          quantity: this.state.quantity, 
+          total: (item.price * this.state.quantity), 
+          kind: this.state.selectedMenu
         }))
-        this.setState({ bulkProducts: moreThanPneReturned, open: true })
+
+        this.setState({ bulkProducts: moreThanOneReturned, open: true })
       }
 
       else if (result.length == 1) {
         Object.assign(result[0], { quantity: this.state.quantity })
         Object.assign(result[0], { total: result[0].price * this.state.quantity })
+        Object.assign(result[0], { totalCost: result[0].cost * this.state.quantity })
         Object.assign(result[0], { kind: this.state.selectedMenu })
 
-        this.setState((state) => ({ totalPrice: state.totalPrice + (result[0].price * state.quantity) }))
+        this.setState((state) => ({ totalPrice: state.totalPrice + result[0].total ,totalCost:state.totalCost+result[0].totalCost}))
         this.state.data.push(result[0])
         this.setState({ barcode: "", quantity: 1, isReturn: false })
       }
@@ -284,7 +315,7 @@ export default class Home extends Component {
     }
 
     const deleteFunc = () => {
-      this.setState({ data: [], totalPrice: 0, quantity: 1, drugDetail: [] })
+      this.setState({ data: [], totalPrice: 0, totalCost:0,quantity: 1, drugDetail: [] })
 
     }
 
@@ -295,9 +326,9 @@ export default class Home extends Component {
         return "-"
     }
 
-    const insertToSold = (solded, billID, date) => {
+    const insertToSold = (sold, billID, date) => {
       dbQ.queryWithArgNoreturn("INSERT INTO `sold`(`soldBy`, `bill_ID`, `productID`, `kind`, `quantity`, `price`, `date`) VALUES (?,?,?,?,?,?,?)",
-        [this.state.userID, billID, solded.productID, solded.kind, solded.quantity, solded.price, date])
+        [this.state.userID, billID, sold.productID, sold.kind, sold.quantity, sold.price, date])
     }
 
     const lock = async () => {
@@ -307,16 +338,15 @@ export default class Home extends Component {
 
       if (this.state.data.length) {
 
+        //inserting in to bills and get billID
         if (!this.state.return) {
-          dbQ.queryWithArgNoreturn("INSERT INTO `bills`( `pharmacyID`, `cashier`, `totalPrice`, `date`) VALUES (?,?,?,?)",
-            [this.state.pharmacyID, this.state.userID, this.state.totalPrice, date]);
+
+          dbQ.queryWithArgNoreturn("INSERT INTO `bills`( `pharmacyID`, `cashier`, `totalCost`,`totalPrice`, `date`) VALUES (?,?,?,?,?)",
+            [this.state.pharmacyID, this.state.userID,this.state.totalCost,this.state.totalPrice, date]);
 
           let billIDPromise = dbQ.queryWithArg("select max(bill_ID) as billID from bills where cashier = ? and pharmacyID=?", [this.state.userID, this.state.pharmacyID])
 
-
           await billIDPromise.then(async function (result) {
-
-
             currentComponent.setState({ billID: result[0].billID })
           });
         }
@@ -373,7 +403,7 @@ export default class Home extends Component {
               [(this.state.data[i].quantity * this.state.data[i].sheetPerPacket) * this.state.data[i].pillPerSheet, this.state.data[i].productID, this.state.pharmacyID]
             )
 
-            //insering to sold table
+            //inserting to sold table
             if (!this.state.isReturn)
               insertToSold(this.state.data[i], this.state.billID, date)
           }
@@ -506,7 +536,7 @@ export default class Home extends Component {
 
         </div>
 
-        {/* sold drgs table  */}
+        {/* sold drugs table  */}
         <div style={{ marginTop: "1%" }}>
           <TableContainer component={Paper}>
             <Table aria-label="simple table">

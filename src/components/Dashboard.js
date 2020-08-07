@@ -171,7 +171,7 @@ export default class Dashboard extends Component {
 
         var costAndProfit = await dbQ.queryWithArg(
             "SELECT s.productID, SUM(s.price * s.quantity) AS total, p.productID, SUM(p.cost * s.quantity) AS cost,SUM(s.price * s.quantity) - SUM(p.cost * s.quantity) as profit " +
-            "FROM sold AS s INNER JOIN products AS p ON s.productID = p.productID where " + this.profitMonth() + " = ? ", dateSplitbyHyphen)
+            "FROM sold AS s INNER JOIN products AS p ON s.productID = p.productID and p.pharmacyID = ? where " + this.profitMonth() + " = ? ", [this.props.pharmacyID,dateSplitbyHyphen])
 
         this.setState({ data: result })
 

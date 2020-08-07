@@ -11,6 +11,8 @@ import Paper from '@material-ui/core/Paper';
 //tabs
 
 import Owe from './Owe'
+import Analytics from './Analytics'
+
 
 
 
@@ -70,18 +72,21 @@ export default function Report(props) {
 
       <Paper position="static" >
         <Tabs value={value} indicatorColor="primary" textColor="primary" onChange={handleChange} aria-label="simple tabs example">
-          <Tab label="Owe" {...a11yProps(0)} />
-        </Tabs>
-      </Paper>
+          <Tab label="Analytics" {...a11yProps(0)} />
+          <Tab label="Owe" {...a11yProps(1)} />
 
+        </Tabs>
+      </Paper> 
+      
       <TabPanel value={value} index={0}>
+        <Analytics pharmacyID={props.pharmacyID}/>
+      </TabPanel>
+
+      <TabPanel value={value} index={1}>
         <Owe pharmacyID={props.pharmacyID}/>
       </TabPanel>
 
-      {/* <TabPanel value={value} index={1}>
-        <Expire pharmacyID={props.pharmacyID}/>
-      </TabPanel> */}
-
+     
     </div>
   );
 }

@@ -2,7 +2,7 @@ import React from 'react';
 import { forwardRef } from 'react';
 
 //metrial ui
-import MaterialTable from 'material-table';
+import MaterialTable,{ MTableToolbar }  from 'material-table';
 import Button from '@material-ui/core/Button';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogActions from '@material-ui/core/DialogActions';
@@ -26,6 +26,7 @@ import Remove from '@material-ui/icons/Remove';
 import SaveAlt from '@material-ui/icons/SaveAlt';
 import Search from '@material-ui/icons/Search';
 import ViewColumn from '@material-ui/icons/ViewColumn';
+import RefreshIcon from '@material-ui/icons/Refresh';
 
 
 //db 
@@ -248,6 +249,21 @@ export default function Stock() {
                     })
                 }}
                 onRowClick={((evt, selectedRow) => setSelectedRow(selectedRow.tableData.id))}
+                components={{
+                    Toolbar: props => (
+                        <div>
+                          <MTableToolbar {...props} />
+                          <div style={{padding: '0px 0px 0px 18px',marginBottom:"1%"}}>
+                            <Button
+                            size="small"
+                            variant="contained" 
+                            color="primary"
+                            startIcon={<RefreshIcon />}
+                            >Refresh</Button>
+                          </div>
+                        </div>
+                      ),
+                  }}
             />
 
             {/* validation dialog */}
