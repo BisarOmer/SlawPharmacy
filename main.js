@@ -12,7 +12,7 @@ const url = require('url')
 const Store = require('electron-store');
 const store = new Store();
 
-// creating 
+// creating sql connection
 const mysql = require('mysql')
 
 const connection = mysql.createConnection({
@@ -117,7 +117,7 @@ app.on('window-all-closed', () => {
     store.delete("stock")
     store.delete("stock")
 
-    connection.end(function(err) {
+    connection.end(function (err) {
       // The connection is terminated now
     });
 
@@ -141,7 +141,7 @@ connection.connect(function (err) {
 
 ipcMain.on('query', function (event, sql) {
 
-  // console.log('query received', sql);
+
 
   connection.query(sql, function (err, rows, fields) {
     if (err) {
@@ -149,11 +149,7 @@ ipcMain.on('query', function (event, sql) {
       return false;
     }
     else {
-      // console.log(rows);
-
-      // event.reply('result', rows)
       event.returnValue = rows
-
     }
 
   });
@@ -162,16 +158,12 @@ ipcMain.on('query', function (event, sql) {
 
 ipcMain.on('queryWithArg', function (event, sql, para) {
 
-  // console.log('query received', sql, para);
-
   connection.query(sql, para, function (err, rows, fields) {
     if (err) {
       console.log('error executing', err);
       return false;
     }
     else {
-      // console.log(rows);
-      // event.reply('resultwithPara', rows)
       event.returnValue = rows
     }
 
@@ -179,7 +171,7 @@ ipcMain.on('queryWithArg', function (event, sql, para) {
 
 });
 
-// backup 
+// daily backup 
 const CronJob = require('cron/lib/cron.js').CronJob;
 const { exec } = require("child_process");
 

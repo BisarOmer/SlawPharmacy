@@ -17,10 +17,8 @@
   "scripts": {
     "prod": "cross-env NODE_ENV=production webpack --mode production --config webpack.build.config.js && electron --noDevServer .",
     "start": "cross-env NODE_ENV=development webpack-dev-server --hot --host 0.0.0.0 --config=./webpack.dev.config.js --mode development",
-    "package": "npm run build",
     "build": "node node_modules/cross-env/src/bin/cross-env.js NODE_ENV=production webpack --config webpack.build.config.js --mode production",
-    "postpackage": "electron-packager . --asar --platform=win32 --arch=x64 ./ --out=./builds",
-    "ElectronBilder": "electron-builder build --win --x64"
+    "build-Win64": "electron-builder build --win --x64"
   },
   "dependencies": {
     "@material-ui/core": "^4.10.1",
@@ -47,9 +45,8 @@
     "cross-env": "^7.0.2",
     "css-loader": "^3.5.3",
     "electron": "^9.0.0",
-    "electron-builder": "^22.7.0",
+    "electron-builder": "^22.9.1",
     "electron-devtools-installer": "^3.0.0",
-    "electron-packager": "^14.2.1",
     "file-loader": "^6.0.0",
     "html-webpack-plugin": "^4.3.0",
     "mini-css-extract-plugin": "^0.9.0",
