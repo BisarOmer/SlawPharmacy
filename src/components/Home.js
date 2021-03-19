@@ -156,7 +156,7 @@ export default class Home extends Component {
         { text: 'Cashier: ' + localStorage.getItem('username') },
         { text: 'Items', style: 'subheader' },
         { text: 'Total = ' + this.state.totalPrice, style: 'subheader' },
-        { text: 'Developed By Slaw Company', alignment: 'center' },
+        { text: 'Developed By Slaw Pharmacy', alignment: 'center' },
       ]
       ,
       styles: {

@@ -292,7 +292,7 @@ export default function Imports() {
                         onClick: (event, rowData) => {
 
                             setHeader(rowData)
-                            console.log(rowData);
+                            
                             const returnData = async () => {
                                 var result = await dbQ.queryWithArg
                                     (

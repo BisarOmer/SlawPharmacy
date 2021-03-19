@@ -249,21 +249,21 @@ export default function Stock() {
                     })
                 }}
                 onRowClick={((evt, selectedRow) => setSelectedRow(selectedRow.tableData.id))}
-                components={{
-                    Toolbar: props => (
-                        <div>
-                          <MTableToolbar {...props} />
-                          <div style={{padding: '0px 0px 0px 18px',marginBottom:"1%"}}>
-                            <Button
-                            size="small"
-                            variant="contained" 
-                            color="primary"
-                            startIcon={<RefreshIcon />}
-                            >Refresh</Button>
-                          </div>
-                        </div>
-                      ),
-                  }}
+                // components={{
+                //     Toolbar: props => (
+                //         <div>
+                //           <MTableToolbar {...props} />
+                //           <div style={{padding: '0px 0px 0px 18px',marginBottom:"1%"}}>
+                //             <Button
+                //             size="small"
+                //             variant="contained" 
+                //             color="primary"
+                //             startIcon={<RefreshIcon />}
+                //             >Refresh</Button>
+                //           </div>
+                //         </div>
+                //       ),
+                //   }}
             />
 
             {/* validation dialog */}

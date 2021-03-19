@@ -32,40 +32,36 @@ import ViewColumn from '@material-ui/icons/ViewColumn';
 import db from '../../Backend/db'
 var dbQ = new db();
 
-export default class Users extends React.Component {
+export default function Users(props) {
 
 
-    constructor(props) {
-        super(props);
-        this.state = {
-            data: [],
-            PharmacyID: this.props.pharmacyID,
-            userID: "",
-            open: false,
+    const [usersData, setUsers] = React.useState();
+    const [open, setOpen] = React.useState(false);
+    const [userID, setuserID] = React.useState();
+    const PharmacyID=props.pharmacyID;
 
-        };
-    }
 
-    componentDidMount() {
-        this.fetchUsers()
-    }
+    React.useEffect(() => {
+        fetchUsers()
+    }, []);
 
-    async fetchUsers() {
+    const fetchUsers = async () => {
         var result = await dbQ.queryWithArg(
             "SELECT users.userID, users.employee, users.username, users.password, users.role, pharmacies.name, pharmacies.pharmacyID FROM users " +
             " INNER JOIN pharmacies ON users.employee= pharmacies.pharmacyID where  pharmacies.pharmacyID =? ",
-            this.state.PharmacyID)
+            PharmacyID)
 
-        this.setState({ data: result, userID: localStorage.getItem("userID") })
+        setUsers(result)
+        setuserID(localStorage.getItem("userID"))
     }
 
-    AddLastOne (){
+    const AddLastOne = () => {
 
         var result = dbQ.query
             ("SELECT users.userID, users.employee, users.username, users.password, users.role, pharmacies.name, pharmacies.pharmacyID FROM users " +
                 " INNER JOIN pharmacies ON users.employee= pharmacies.pharmacyID where  pharmacies.pharmacyID =? ORDER BY users.userID DESC LIMIT 1 ")
 
-        setData((prevState) => {
+        setUsers((prevState) => {
             const data = [...prevState];
             data.push(result[0]);
             return data
@@ -73,8 +69,6 @@ export default class Users extends React.Component {
 
     }
 
-
-    render() {
 
         const columns = [
             { title: 'Pharmacy', field: 'name', editable: "never" },
@@ -140,7 +134,7 @@ export default class Users extends React.Component {
                 <MaterialTable
                     title="Users"
                     columns={columns}
-                    data={this.state.data}
+                    data={usersData}
                     editable={{
                         onRowAdd: (newData) =>
                             new Promise((resolve) => {
@@ -149,10 +143,10 @@ export default class Users extends React.Component {
                                         resolve();
 
                                         dbQ.queryWithArgNoreturn("INSERT INTO `users`(`employee`, `username`, `password`, `role`) VALUES (?,?,?,?)",
-                                            [this.state.PharmacyID, newData.username, newData.password, newData.role]
+                                            [PharmacyID, newData.username, newData.password, newData.role]
                                         )
 
-                                        this.AddLastOne()
+                                        AddLastOne()
                                     }
                                     else {
                                         this.setState({ open: true })
@@ -163,17 +157,19 @@ export default class Users extends React.Component {
                         onRowUpdate: (newData, oldData) =>
                             new Promise((resolve) => {
                                 setTimeout(() => {
-                                    if (Object.keys(newData).length == 3) {
+
+                                    if (Object.keys(newData).length >= 2) {
                                         resolve();
                                         if (oldData) {
-                                            setData((prevState) => {
+
+                                            setUsers((prevState) => {
                                                 const data = [...prevState];
                                                 data[data.indexOf(oldData)] = newData;
-                                                return data
+                                                return  data
                                             });
 
-                                            dbQ.queryWithArgNoreturn("UPDATE `users` SET `username`=?,`password`=?,`role`=? WHERE userID=? and pharmacyID =?",
-                                                [newData.username, newData.password, newData.role, oldData.userID, this.state.PharmacyID]
+                                            dbQ.queryWithArgNoreturn("UPDATE `users` SET `username`=?,`password`=?,`role`=? WHERE userID=? and employee =?",
+                                                [newData.username, newData.password, newData.role, oldData.userID, PharmacyID]
                                             )
                                         }
                                     }
@@ -188,13 +184,13 @@ export default class Users extends React.Component {
                                 setTimeout(() => {
                                     if (oldData.userID != userID) {
                                         resolve();
-                                        setData((prevState) => {
+                                        setUsers((prevState) => {
                                             const data = [...prevState];
                                             data.splice(data.indexOf(oldData), 1);
                                             return data
                                         });
                                         dbQ.queryWithArgNoreturn("DELETE FROM `users` WHERE userID=? and pharmacyID = ?",
-                                            [oldData.userID, this.state.PharmacyID]
+                                            [oldData.userID, PharmacyID]
                                         )
                                     }
                                     else
@@ -213,7 +209,7 @@ export default class Users extends React.Component {
 
                 {/* empty input validation dialog */}
                 <Dialog
-                    open={this.state.open}
+                    open={open}
                     onClose={handleClose}
                     aria-labelledby="alert-dialog-title"
                     aria-describedby="alert-dialog-description"
@@ -229,7 +225,5 @@ export default class Users extends React.Component {
 
             </div>
         );
-    }
-
-
+    
 }

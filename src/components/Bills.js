@@ -62,18 +62,18 @@ export default class Bills extends React.Component {
   // after mount
   async returnData () {
     // do not have cached
-    if (!store.get("bills")) {
+    // if (!store.get("bills")) {
       var result = await dbQ.queryWithArg("SELECT b.bill_ID,b.pharmacyID,b.totalPrice,b.date,b.cashier, u.username,u.userID FROM `bills` as b INNER JOIN users as u on b.cashier=u.userID WHERE b.pharmacyID = ? ORDER BY b.bill_ID DESC", localStorage.getItem("pharmacyID"))
       this.setState({ data: result })
-      store.set("bills", result)
-    }
+    //   store.set("bills", result)
+    // }
     // have cache
-    else {
-      this.setState({ data: store.get("bills") })
-    }
+    // else {
+    //   this.setState({ data: store.get("bills") })
+    // }
   }
 
-  //sold items are obect of arrya we have to change to arrya and get some specific value to print
+  //sold items are object of array we have to change to array and get some specific value to print
   soldItemsIntoArray() {
 
     var tempArr
@@ -113,7 +113,7 @@ export default class Bills extends React.Component {
         { text: 'Cashier: ' + this.state.cashierAndTotal.cashhier },
         { text: 'Items', style: 'subheader' },
         { text: 'Total = ' + this.state.cashierAndTotal.totalPrice, style: 'subheader' },
-        { text: 'Developed By Slaw Company', alignment: 'center' },
+        { text: 'Developed By Slaw Pharmacy', alignment: 'center' },
       ]
       ,
       styles: {

@@ -30,14 +30,14 @@ export default class Analytics extends Component {
     var MostImportsReturn = await dbQ.queryWithArg("SELECT COUNT(i.importID) as Imports , c.name from imports as i INNER JOIN companies as c ON i.from = c.companyID WHERE i.pharmacyID = ? GROUP BY i.from  ORDER BY Imports DESC LIMIT 15",
       this.props.pharmacyID)
 
-    var MonthlyDataReturn = await dbQ.queryWithArg("SELECT SUM(totalCost)-SUM(totalPrice) AS Profit , SUM(totalPrice) AS Total,MONTH(date) as Month FROM bills WHERE pharmacyID = ? and YEAR(date)=? GROUP by MONTH(date)", [this.props.pharmacyID,this.state.year.getFullYear()])
+    var MonthlyDataReturn = await dbQ.queryWithArg("SELECT SUM(totalPrice)-SUM(totalCost) AS Profit , SUM(totalPrice) AS Total,MONTH(date) as Month FROM bills WHERE pharmacyID = ? and YEAR(date)=? GROUP by MONTH(date)", [this.props.pharmacyID,this.state.year.getFullYear()])
 
-    console.log(MonthlyDataReturn);
     this.setState({ MostImports: MostImportsReturn, MonthlyData: MonthlyDataReturn, loaded: true })
   }
 
   handleYearChange(date) {
-    this.setState({ year: date })
+    this.setState({ year: date });
+    this.fetchData();
   }
 
 
